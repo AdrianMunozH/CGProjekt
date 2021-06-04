@@ -4,6 +4,7 @@ var vertexShaderText =
 '',
 'attribute vec3 vertPosition;',
 'attribute vec3 vertColor;',
+
 'varying vec3 fragColor;',
 'uniform mat4 mWorld;',
 'uniform mat4 mView;',
@@ -15,6 +16,7 @@ var vertexShaderText =
 '  gl_Position = mProj * mView * mWorld * vec4(vertPosition, 1.0);',
 '}'
 ].join('\n');
+
 var fragmentShaderText =
 [
   'precision mediump float;',
@@ -24,8 +26,43 @@ var fragmentShaderText =
   '{',
   ' gl_FragColor = vec4(fragColor,1.0);',
   '}'
+  
 ].join('\n');
+
+var skyboxVertexShaderText = [
+  
+  'attribute vec3 vPosition;',
+
+  'varying vec3 fTexCoord;',
+
+  'uniform mat4 mWorld;',
+  'uniform mat4 mView;',
+  'uniform mat4 mProj;',
+
+  'void main()',
+  '{',
+  'fTexCoord = vPosition;',
+  'vec3 viewPos = (mView * mWorld * vec4(vPosition, 0.0)).xyz;',
+  'gl_Position = mProj * vec4(viewPos, 1.0);',
+  '}'
+].join('\n');
+
+var skyboxFragmentShaderText = [
+  'precision mediump float;',
+
+  'uniform samplerCube skybox;',
+  'uniform mat4 viewDirectionProjectionInverse;',
+
+  'varying vec3 fTexCoord;',
+
+  'void main()',
+  '{',
+  'gl_FragColor = textureCube(skybox, fTexCoord);',
+  '}'
+].join('\n');
+
 var InitDemo = function () {
+  //setup
   console.log('This is working');
 
   var canvas = document.getElementById('game-surface');
@@ -46,11 +83,17 @@ var InitDemo = function () {
   gl.frontFace(gl.CCW);
   gl.cullFace(gl.BACK);
 
+  //shader setup
+
   var vertexShader = gl.createShader(gl.VERTEX_SHADER);
   var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+  var skyboxVertShader = gl.createShader(gl.VERTEX_SHADER);
+  var skyboxFragShader = gl.createShader(gl.FRAGMENT_SHADER);
 
   gl.shaderSource(vertexShader,vertexShaderText);
   gl.shaderSource(fragmentShader,fragmentShaderText);
+  gl.shaderSource(skyboxVertShader, skyboxVertexShaderText);
+  gl.shaderSource(skyboxFragShader, skyboxFragmentShaderText);
 
   gl.compileShader(vertexShader);
   if(!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
@@ -62,6 +105,17 @@ var InitDemo = function () {
     console.error('ERROR compiling fragment shader!', gl.getShaderInfoLog(fragmentShader));
     return;
   }
+  gl.compileShader(skyboxVertShader);
+  if(!gl.getShaderParameter(skyboxVertShader, gl.COMPILE_STATUS)) {
+    console.error('ERROR compiling skybox vertex shader!', gl.getShaderInfoLog(skyboxVertShader));
+    return;
+  }
+  gl.compileShader(skyboxFragShader);
+  if(!gl.getShaderParameter(skyboxFragShader, gl.COMPILE_STATUS)) {
+    console.error('ERROR compiling skybox fragment shader!', gl.getShaderInfoLog(skyboxFragShader));
+    return;
+  }
+
   var program = gl.createProgram();
   gl.attachShader(program,vertexShader);
   gl.attachShader(program,fragmentShader);
@@ -75,6 +129,21 @@ var InitDemo = function () {
 		console.error('ERROR validating program!', gl.getProgramInfoLog(program));
 		return;
 	}
+
+  var skyboxProgram = gl.createProgram();
+  gl.attachShader(skyboxProgram,skyboxVertShader);
+  gl.attachShader(skyboxProgram,skyboxFragShader);
+  gl.linkProgram(skyboxProgram);
+  if(!gl.getProgramParameter(skyboxProgram,gl.LINK_STATUS)) {
+    console.error('ERROR linking skybox program!', gl.getProgramInfoLog(skyboxProgram));
+    return;
+  }
+  gl.validateProgram(skyboxProgram);
+	if (!gl.getProgramParameter(skyboxProgram, gl.VALIDATE_STATUS)) {
+		console.error('ERROR validating skybox program!', gl.getProgramInfoLog(skyboxProgram));
+		return;
+	}
+  
     var boxVertices = 
 	[ // X, Y, Z           R, G, B
 		// Top
@@ -231,6 +300,7 @@ var InitDemo = function () {
 
 
   var camAngle = 0;
+
   var loop = function () {
 
 
@@ -254,7 +324,12 @@ var InitDemo = function () {
       gl.uniformMatrix4fv(matWorldUniformLocation,gl.FALSE,worldMatrix);
       gl.drawElements(gl.TRIANGLES,boxIndices.length, gl.UNSIGNED_SHORT,worldMatrix);
     }
-    
+    //one big box for skybox
+    //how to big?
+    //!!!
+    mat4.scale(worldMatrix,worldMatrix,[20,30,20]);
+    gl.drawElements(gl.TRIANGLES,boxIndices.length, gl.UNSIGNED_SHORT,worldMatrix);
+
     camAngle = performance.now() / 1000 / 6 * 2 * Math.PI;
     lookAt(viewMatrix, [0,0,-30],[0,0,0],[0,1,0]);
 
