@@ -14,11 +14,13 @@ async function InitDemo() {
     }
 
     //test
-
+    /*
 
     // hier eine setup methode 
     // vertices der obj datein laden
     const tVertices = await fetchModel('teapot.obj');
+
+    const cVertices = await fetchModel('blendercube2.obj');
 
 
     // material werte
@@ -33,6 +35,13 @@ async function InitDemo() {
     // init der versch models.
     let teapotModel = {
         vertices: tVertices,
+        material: tMaterial,
+        // is skybox ?? oder wessen program benutzt werden soll
+        // textur
+    }
+
+    let cubeModel = {
+        vertices: cVertices,
         material: tMaterial,
         // is skybox ?? oder wessen program benutzt werden soll
         // textur
@@ -53,30 +62,33 @@ async function InitDemo() {
         return;
     }
 
+    const cube = await createObject(cubeModel, gl);
+    //shader datein werden geladen
+    cube.program = await createShaderProgram(gl, 'teapot_vert.glsl', 'teapot_frag.glsl');
+
+    if (!cube.program) {
+        console.error('solarSystem Cannot run without shader program!');
+        return;
+    }
+    */
+
 
     // alles was gezeichnet werden soll
     let models = [];
 
-    let programs = [];
-
-    // shader werden geladen
-    //programs[0] = await createShaderProgram(gl, 'teapot_vert.glsl', 'teapot_frag.glsl');
-
-
-    // hinz. der versch models
-    models[0] = teapot;
+    models = await setUpArray(gl);
 
 
     // muss nochmal alles durchgegangen werden
-    gl.clearColor(0.75, 0.85, 0.8, 1.0); 
-    gl.enable(gl.DEPTH_TEST); 
+    gl.clearColor(0.75, 0.85, 0.8, 1.0);
+    gl.enable(gl.DEPTH_TEST);
     var worldMatrix = new Float32Array(16);
     var viewMatrix = new Float32Array(16);
     var projMatrix = new Float32Array(16);
 
 
     //Draw loop
-    function loop() {
+    async function loop() {
         gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
         /*
         // muss auch nochmal recherchiert werden
@@ -90,63 +102,150 @@ async function InitDemo() {
         gl.disable(gl.BLEND);
         */
         // kamera
-        lookAt(viewMatrix, [5, -5, -5], [0, 0, 0], [0, 1, 0]);
+        lookAt(viewMatrix, [-5, 0, -15], [0, 0, 0], [0, 1, 0]);
 
-        mat4.perspective(projMatrix, radians_to_degree(90), canvas.clientWidth / canvas.clientHeight, 0.1, 1000.0);
-       
+        mat4.perspective(projMatrix, radians_to_degree(45), canvas.clientWidth / canvas.clientHeight, 0.1, 1000.0);
 
-        // hier die for each für die liste der objekte
+        // Rendert alle objekte
+        for await (const element of models) {
+            drawObject(gl, element, viewMatrix, projMatrix);
+        }
 
-        // Draw Objects
-        gl.useProgram(teapot.program);
-
-        gl.clearColor(0.75, 0.85, 0.8, 1.0);
-        gl.enable(gl.DEPTH_TEST);
-            
-        matProjUniformLocation = gl.getUniformLocation(teapot.program, 'mProj');
-		gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
-		
-		matViewUniformLocation = gl.getUniformLocation(teapot.program, 'mView');		
-		gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
-		
-        let matWorldUniformLocation = gl.getUniformLocation(teapot.program, 'mWorld');
-        identity(worldMatrix);
-        // veränderung des objektes
-        mat4.rotate(worldMatrix,worldMatrix,degrees_to_radians(180),[0,0,1]);
-        mat4.scale(worldMatrix,worldMatrix,[2,2,2]);
-
-        
-        gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
-
-        teapot.draw();
-
-        // !foreach
-
-        
         requestAnimationFrame(loop);
     }
 
     requestAnimationFrame(loop);
 }
+function drawObject(gl, currentObject, viewMatrix, projMatrix) {
+
+    var worldMatrix = new Float32Array(16);
+
+
+    // Draw Objects
+    gl.useProgram(currentObject.program);
+
+    gl.clearColor(0.75, 0.85, 0.8, 1.0);
+    gl.enable(gl.DEPTH_TEST);
+
+
+    let matProjUniformLocation = gl.getUniformLocation(currentObject.program, 'mProj');
+    gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
+
+    let matViewUniformLocation = gl.getUniformLocation(currentObject.program, 'mView');
+    gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
+
+    let matWorldUniformLocation = gl.getUniformLocation(currentObject.program, 'mWorld');
+    identity(worldMatrix);
+    // veränderung des objektes
+
+    mat4.rotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
+    mat4.translate(worldMatrix, worldMatrix, currentObject.model.position);
+    mat4.scale(worldMatrix, worldMatrix, currentObject.model.scale);
+
+
+
+    gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
+
+    // draw call -- weil ich ihn immer übersehe :D
+    currentObject.draw();
+
+    gl.useProgram(null);
+
+}
+
+async function setUpObject(gl, objFile, vertShader, fragShader, ambient, diffuse, specular, shiny, position, angle, rotationAxis, scale) {
+
+    const oVertices = await fetchModel(objFile);
+
+    // material werte
+    let oMaterial = {
+        ambient: ambient,
+        diffuse: diffuse,
+        specular: specular,
+        shiny: shiny
+    }
+
+
+    // init der versch models.
+    let modelObj = {
+        vertices: oVertices,
+        material: oMaterial,
+        position: position,
+        angle: angle,
+        rotationAxis: rotationAxis,
+        scale: scale
+        // is skybox ?? oder wessen program benutzt werden soll
+        // textur
+    }
+
+    const setUpObject = await createObject(modelObj, gl);
+    //shader datein werden geladen
+    setUpObject.program = await createShaderProgram(gl, vertShader, fragShader);
+
+    if (!setUpObject.program) {
+        console.error('solarSystem Cannot run without shader program!');
+        return;
+    }
+
+    return setUpObject;
+}
+
+function setUpArray(gl) {
+    let setUpObjects = [];
+
+
+
+    // teapot
+    setUpObjects[0] = setUpObject(
+        gl,
+        'teapot.obj', 'teapot_vert.glsl', 'teapot_frag.glsl', //obj file und shader
+        [0.23, 0.09, 0.03], // ambient
+        [0.55, 0.21, 0.07], // diffuse
+        [0.58, 0.22, 0.07], // specular
+        51.2,               // shiny
+        [0, 0, 0],            // position
+        0,                  // angle
+        [0, 0, 0],            // rotation
+        [1, 1, 1],            // scale
+    );
+
+    // cube
+    setUpObjects[1] = setUpObject(
+        gl,
+        'blendercube2.obj', 'teapot_vert.glsl', 'teapot_frag.glsl',
+        [0.23, 0.09, 0.03], // ambient
+        [0.55, 0.21, 0.07], // diffuse
+        [0.58, 0.22, 0.07], // specual
+        51.2,               // shinty
+        [4, 0, 0],            // position
+        0,                  // angle
+        [0, 0, 0],            // rotation
+        [2, 2, 2]             // scale
+    );
+
+
+
+    return setUpObjects;
+}
 
 async function createObject(model, gl) {
 
     const obj = {};
-    
+
     obj.model = model;
     obj.vertexBufferObject = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, obj.vertexBufferObject);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.vertices), gl.STATIC_DRAW);
-	gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    gl.bindBuffer(gl.ARRAY_BUFFER, obj.vertexBufferObject);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.vertices), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
 
     obj.draw = function () {
-        
+
         // buffer wird nochmal gebindet für die loop
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBufferObject);
-        
+
         var positionAttribLocation = gl.getAttribLocation(this.program, 'vPosition');
-        
+
         // ersten 3 werte sind die vertices
         gl.vertexAttribPointer(
             positionAttribLocation, // Attribute location
@@ -181,9 +280,7 @@ async function createObject(model, gl) {
         gl.uniform3f(diffuseUniformLocation, this.model.material.diffuse[0], this.model.material.diffuse[1], this.model.material.diffuse[2]);
         gl.uniform3f(specularUniformLocation, this.model.material.specular[0], this.model.material.specular[1], this.model.material.specular[2]);
         gl.uniform1f(shininessUniformLocation, this.model.material.shiny);
-        console.log(this.model.material.ambient[0]);
-        
-        
+
         //lightning -- kann vielleicht nur in createObj() sein
 
         const lightPositionUniformLocation = gl.getUniformLocation(this.program, 'light.position');
@@ -201,11 +298,11 @@ async function createObject(model, gl) {
 
 
         // unbind everything
-        
+
         gl.disableVertexAttribArray(positionAttribLocation);
         gl.disableVertexAttribArray(normalAttribLocation);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
-        
+
 
     }
     return obj;
