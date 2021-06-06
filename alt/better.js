@@ -15,15 +15,17 @@ async function InitDemo() {
 
     //test
 
+
+    // hier eine setup methode 
     // vertices der obj datein laden
     const tVertices = await fetchModel('teapot.obj');
 
 
     // material werte
     let tMaterial = {
-        ambient: (0.23, 0.09, 0.03),
-        diffuse: (0.23, 0.09, 0.03),
-        specular: (0.23, 0.09, 0.03),
+        ambient: [0.23, 0.09, 0.03],
+        diffuse: [0.23, 0.09, 0.03],
+        specular: [0.23, 0.09, 0.03],
         shiny: 51.2
     }
 
@@ -87,25 +89,40 @@ async function InitDemo() {
         gl.disable(gl.CULL_FACE); //eliminating back face drawing : disabled
         gl.disable(gl.BLEND);
         */
+        // kamera
+        lookAt(viewMatrix, [5, -5, -5], [0, 0, 0], [0, 1, 0]);
 
         mat4.perspective(projMatrix, radians_to_degree(90), canvas.clientWidth / canvas.clientHeight, 0.1, 1000.0);
        
+
+        // hier die for each für die liste der objekte
 
         // Draw Objects
         gl.useProgram(teapot.program);
 
         gl.clearColor(0.75, 0.85, 0.8, 1.0);
         gl.enable(gl.DEPTH_TEST);
-
+            
+        matProjUniformLocation = gl.getUniformLocation(teapot.program, 'mProj');
+		gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
+		
+		matViewUniformLocation = gl.getUniformLocation(teapot.program, 'mView');		
+		gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
+		
         let matWorldUniformLocation = gl.getUniformLocation(teapot.program, 'mWorld');
         identity(worldMatrix);
+        // veränderung des objektes
+        mat4.rotate(worldMatrix,worldMatrix,degrees_to_radians(180),[0,0,1]);
+        mat4.scale(worldMatrix,worldMatrix,[2,2,2]);
+
+        
         gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
 
         teapot.draw();
 
-        // kamera
-        lookAt(viewMatrix, [5, 3, -8], [0, 0, 0], [0, 1, 0]);
+        // !foreach
 
+        
         requestAnimationFrame(loop);
     }
 
@@ -115,9 +132,8 @@ async function InitDemo() {
 async function createObject(model, gl) {
 
     const obj = {};
-
-    // buffer, methode bindet und l
-
+    
+    obj.model = model;
     obj.vertexBufferObject = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, obj.vertexBufferObject);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.vertices), gl.STATIC_DRAW);
@@ -161,10 +177,11 @@ async function createObject(model, gl) {
         const diffuseUniformLocation = gl.getUniformLocation(this.program, 'mat.diffuse');
         const specularUniformLocation = gl.getUniformLocation(this.program, 'mat.specular');
         const shininessUniformLocation = gl.getUniformLocation(this.program, 'mat.shininess');
-        gl.uniform3f(ambientUniformLocation, model.material.ambient.x, model.material.ambient.y, model.material.ambient.z);
-        gl.uniform3f(diffuseUniformLocation, model.material.diffuse.x, model.material.diffuse.y, model.material.diffuse.z);
-        gl.uniform3f(specularUniformLocation, model.material.specular.x, model.material.specular.y, model.material.specular.z);
-        gl.uniform1f(shininessUniformLocation, model.material.shiny);
+        gl.uniform3f(ambientUniformLocation, this.model.material.ambient[0], this.model.material.ambient[1], this.model.material.ambient[2]);
+        gl.uniform3f(diffuseUniformLocation, this.model.material.diffuse[0], this.model.material.diffuse[1], this.model.material.diffuse[2]);
+        gl.uniform3f(specularUniformLocation, this.model.material.specular[0], this.model.material.specular[1], this.model.material.specular[2]);
+        gl.uniform1f(shininessUniformLocation, this.model.material.shiny);
+        console.log(this.model.material.ambient[0]);
         
         
         //lightning -- kann vielleicht nur in createObj() sein
@@ -184,26 +201,12 @@ async function createObject(model, gl) {
 
 
         // unbind everything
-
+        
         gl.disableVertexAttribArray(positionAttribLocation);
         gl.disableVertexAttribArray(normalAttribLocation);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
+        
 
     }
     return obj;
-}
-
-function createBufferWithData(gl, bufferType, data, mode){
-    var Buffer = gl.createBuffer(bufferType);
-
-    if(Buffer){
-    gl.bindBuffer(bufferType, Buffer);
-    gl.bufferData(bufferType, data, mode);
-    
-    return Buffer;
-    }
-    else {
-        console.log('Failed to create the buffer object!');
-        return -1;
-    }
 }
