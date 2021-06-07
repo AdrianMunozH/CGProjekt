@@ -5,7 +5,7 @@ function degrees_to_radians(degrees)
 }
 
 let radians_to_degree = function(radians) {
-    return rad * 180 / Math.PI;
+    return radians * 180 / Math.PI;
 }
 
 var scale = function(matrix, scaleVec) {
@@ -33,27 +33,27 @@ let trans = function(out,matrix, transVec) {
 
   return out;
 }
-let ident = function(out) {
-  matrix[0] = 1;
-  matrix[1] = 0;
-  matrix[2] = 0;
-  matrix[3] = 0;
-  matrix[4] = 0;
-  matrix[5] = 1;
-  matrix[6] = 0;
-  matrix[7] = 0;
-  matrix[8] = 0;
-  matrix[9] = 0;
-  matrix[10] = 1;
-  matrix[11] = 0;
-  matrix[12] = 0;
-  matrix[13] = 0;
-  matrix[14] = 0;
-  matrix[15] = 1;
+let identity = function(out) {
+  out[0] = 1;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 0;
+  out[4] = 0;
+  out[5] = 1;
+  out[6] = 0;
+  out[7] = 0;
+  out[8] = 0;
+  out[9] = 0;
+  out[10] = 1;
+  out[11] = 0;
+  out[12] = 0;
+  out[13] = 0;
+  out[14] = 0;
+  out[15] = 1;
 
 
   
-  return matrix;
+  return out;
 }
 
 let scalar = function (up,n) {
