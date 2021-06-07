@@ -138,9 +138,10 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix) {
     identity(worldMatrix);
     // veränderung des objektes
 
-    mat4.rotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
+    
     mat4.translate(worldMatrix, worldMatrix, currentObject.model.position);
     mat4.scale(worldMatrix, worldMatrix, currentObject.model.scale);
+    mat4.rotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
 
 
 
@@ -153,7 +154,7 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix) {
 
 }
 
-async function setUpObject(gl, objFile, vertShader, fragShader, ambient, diffuse, specular, shiny, position, angle, rotationAxis, scale) {
+async function setUpObject(gl, objFile, vertShader, fragShader, texture, ambient, diffuse, specular, shiny, position, angle, rotationAxis, scale) {
 
     const oVertices = await fetchModel(objFile);
 
@@ -169,12 +170,13 @@ async function setUpObject(gl, objFile, vertShader, fragShader, ambient, diffuse
     // init der versch models.
     let modelObj = {
         vertices: oVertices,
+        texture: texture,
         material: oMaterial,
         position: position,
         angle: angle,
         rotationAxis: rotationAxis,
         scale: scale
-        // is skybox ?? oder wessen program benutzt werden soll
+        // is skybox ?? oder wessen program benutzt werden so   ll
         // textur
     }
 
@@ -183,7 +185,7 @@ async function setUpObject(gl, objFile, vertShader, fragShader, ambient, diffuse
     setUpObject.program = await createShaderProgram(gl, vertShader, fragShader);
 
     if (!setUpObject.program) {
-        console.error('solarSystem Cannot run without shader program!');
+        console.error('Cannot run without shader program!');
         return;
     }
 
@@ -198,32 +200,34 @@ function setUpArray(gl) {
     // teapot
     setUpObjects[0] = setUpObject(
         gl,
-        'teapot.obj', 'teapot_vert.glsl', 'teapot_frag.glsl', //obj file und shader
+        'teapot.obj', 'shader_vert.glsl', 'shader_frag.glsl', //obj file und shader
+        'crate-image',         // texture
         [0.23, 0.09, 0.03], // ambient
         [0.55, 0.21, 0.07], // diffuse
         [0.58, 0.22, 0.07], // specular
         51.2,               // shiny
-        [0, 0, 0],            // position
-        0,                  // angle
-        [0, 0, 0],            // rotation
-        [1, 1, 1],            // scale
+        [8, 0, 0],            // position
+        320,                  // angle
+        [1, 0, 0],            // rotation
+        [3, 3, 3],            // scale
     );
 
+    
+    
     // cube
     setUpObjects[1] = setUpObject(
         gl,
-        'blendercube2.obj', 'teapot_vert.glsl', 'teapot_frag.glsl',
+        'blendercube2.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+        'crate-image',         // texture
         [0.23, 0.09, 0.03], // ambient
         [0.55, 0.21, 0.07], // diffuse
         [0.58, 0.22, 0.07], // specual
         51.2,               // shinty
-        [4, 0, 0],            // position
-        0,                  // angle
-        [0, 0, 0],            // rotation
-        [2, 2, 2]             // scale
+        [-12, 0, 0],            // position
+        60,                  // angle
+        [0, 1, 0],            // rotation
+        [3, 3, 3]             // scale
     );
-
-
 
     return setUpObjects;
 }
@@ -237,6 +241,21 @@ async function createObject(model, gl) {
     gl.bindBuffer(gl.ARRAY_BUFFER, obj.vertexBufferObject);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.vertices), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+
+
+    // create texture
+    obj.texture = gl.createTexture();
+    //      gl.activeTexture(gl.TEXTURE13); ist in der übung weiß nicht was das bringt, vllt fürs video
+    gl.activeTexture(gl.TEXTURE0); // ich glaube es gab ein array an texture an das ist die stelle 0
+    
+    gl.bindTexture(gl.TEXTURE_2D, obj.texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,document.getElementById(model.texture));
+    gl.bindTexture(gl.TEXTURE_2D, null); // unbind
 
 
     obj.draw = function () {
@@ -257,6 +276,19 @@ async function createObject(model, gl) {
         );
         gl.enableVertexAttribArray(positionAttribLocation);
 
+
+
+        var texCoordAttribLocation = gl.getAttribLocation(this.program, 'vTex');
+        gl.vertexAttribPointer(
+            texCoordAttribLocation,
+			2,
+			gl.FLOAT,
+			gl.FALSE,
+			8 * Float32Array.BYTES_PER_ELEMENT,
+			3 * Float32Array.BYTES_PER_ELEMENT
+		);
+
+
         var normalAttribLocation = gl.getAttribLocation(this.program, 'vNormal');
         gl.vertexAttribPointer(
             normalAttribLocation, // Attribute location
@@ -267,9 +299,19 @@ async function createObject(model, gl) {
             5 * Float32Array.BYTES_PER_ELEMENT // Offset from the beginning of a single vertex to this attribute
         );
 
-
+        
         gl.enableVertexAttribArray(positionAttribLocation);
         gl.enableVertexAttribArray(normalAttribLocation);
+        gl.enableVertexAttribArray(texCoordAttribLocation);
+
+        
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D,this.texture);
+        
+        /*
+        const samplerUniformLocation = gl.getUniformLocation(this.program, 'sampler')
+		gl.uniform1i(samplerUniformLocation, 11); // warum 11 ? für die übung hatte ich das nicht braucht
+        */
 
         // material
         const ambientUniformLocation = gl.getUniformLocation(this.program, 'mat.ambient');
@@ -301,7 +343,9 @@ async function createObject(model, gl) {
 
         gl.disableVertexAttribArray(positionAttribLocation);
         gl.disableVertexAttribArray(normalAttribLocation);
+        gl.disableVertexAttribArray(texCoordAttribLocation);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
+        gl.bindTexture(gl.TEXTURE_2D, null);
 
 
     }

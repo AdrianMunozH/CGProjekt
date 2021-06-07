@@ -31,5 +31,5 @@ void main()
   color += mat.diffuse * light.color * max(dot(N, L), 0.0);
   color += mat.specular * light.color * pow(max(dot(reflect(-L, N), V), 0.0), mat.shininess);
   //gl_FragColor =  vec4(color, 1.0);
-  //gl_FragColor =  texture2D(sampler, fTex);
+  gl_FragColor =  texture2D(sampler, fTex);
 }
