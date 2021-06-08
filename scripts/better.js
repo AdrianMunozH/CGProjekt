@@ -45,7 +45,7 @@ async function InitDemo() {
         gl.disable(gl.BLEND);
         */
         // kamera
-        lookAt(viewMatrix, [-5, 0, -15], [0, 0, 0], [0, 1, 0]);
+        lookAt(viewMatrix, [-5, 0, -10], [0, 0, 0], [0, 1, 0]);
 
         mat4.perspective(projMatrix, radians_to_degree(45), canvas.clientWidth / canvas.clientHeight, 0.1, 1000.0);
 
@@ -70,7 +70,7 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix) {
     gl.clearColor(0.75, 0.85, 0.8, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
-
+    const angle = performance.now() / 1000 / 6 * 2 * Math.PI;
     let matProjUniformLocation = gl.getUniformLocation(currentObject.program, 'mProj');
     gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
 
@@ -84,7 +84,7 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix) {
     // veränderung des objektes -- reihenfolge muss nochmal recherchiert werden
     mat4.translate(worldMatrix, worldMatrix, currentObject.model.position);
     mat4.scale(worldMatrix, worldMatrix, currentObject.model.scale);
-    mat4.rotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
+    mat4.rotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle *angle), currentObject.model.rotationAxis);
 
 
 
@@ -145,33 +145,50 @@ function setUpArray(gl) {
         gl,
         './models/teapot.obj', 'shader_vert.glsl', 'shader_frag.glsl', //obj file und shader
         'crate-image',         // texture
-        [0.23, 0.09, 0.03], // ambient
+        [1.0, 1.0, 1.0], // ambient
         [0.55, 0.21, 0.07], // diffuse
         [0.58, 0.22, 0.07], // specular
         51.2,               // shiny
         [8, 0, 0],            // position
-        320,                  // angle
-        [1, 0, 0],            // rotation
+        -320,                  // angle
+        [1, 0, 1],            // rotation
         [3, 3, 3],            // scale
     );
 
-    
+    //skybox
+
     
     // cube
     setUpObjects[1] = setUpObject(
         gl,
-        './models/blendercube2.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+        './models/cube.obj', 'shader_vert.glsl', 'shader_frag.glsl',
         'crate-image',         // texture
         [0.23, 0.09, 0.03], // ambient
         [0.55, 0.21, 0.07], // diffuse
-        [0.58, 0.22, 0.07], // specual
-        51.2,               // shinty
-        [-12, 0, 0],            // position
+        [0.58, 0.22, 0.07], // specular
+        5,               // shiny
+        [-8, 0, 0],            // position
         60,                  // angle
         [0, 1, 0],            // rotation
         [3, 3, 3]             // scale
     );
 
+    // cube
+    setUpObjects[2] = setUpObject(
+        gl,
+        './models/book.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+        'book-image',         // texture
+        [1, 1, 1], // ambient
+        [1, 1, 1], // diffuse
+        [0.58, 0.22, 0.07], // specular
+        5,               // shiny
+        [12, 0, 0],            // position
+        60,                  // angle
+        [0, 1, 0],            // rotation
+        [1, 1, 1]             // scale
+    );
+
+    
     return setUpObjects;
 }
 
@@ -191,7 +208,17 @@ async function createObject(model, gl) {
     obj.texture = gl.createTexture();
     //      gl.activeTexture(gl.TEXTURE13); ist in der übung weiß nicht was das bringt, vllt fürs video
     gl.activeTexture(gl.TEXTURE0); // ich glaube es gab ein array an texture an das ist die stelle 0
-    
+    /*
+    https://webglfundamentals.org/webgl/lessons/webgl-3d-textures.html
+    You can choose what WebGL does by setting the texture filtering for each texture. There are 6 modes
+
+    NEAREST = choose 1 pixel from the biggest mip
+    LINEAR = choose 4 pixels from the biggest mip and blend them
+    NEAREST_MIPMAP_NEAREST = choose the best mip, then pick one pixel from that mip
+    LINEAR_MIPMAP_NEAREST = choose the best mip, then blend 4 pixels from that mip
+    NEAREST_MIPMAP_LINEAR = choose the best 2 mips, choose 1 pixel from each, blend them
+    LINEAR_MIPMAP_LINEAR = choose the best 2 mips. choose 4 pixels from each, blend them
+    */
     gl.bindTexture(gl.TEXTURE_2D, obj.texture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);

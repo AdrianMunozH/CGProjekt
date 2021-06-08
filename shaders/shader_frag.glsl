@@ -24,12 +24,17 @@ uniform sampler2D sampler;
 
 void main()
 {
-  vec3 L = normalize(light.position - fPosition);
-  vec3 N = normalize(fNormal);
-  vec3 V = vec3(0.0, 0.0, 1.0);
+  vec3 L = normalize(light.position - fPosition); // light direction 
+  vec3 N = normalize(fNormal);                    // normal
+  vec3 V = vec3(0.0, 0.0, 1.0);                   // eye direction
   vec3 color = mat.ambient * light.ambient;
-  color += mat.diffuse * light.color * max(dot(N, L), 0.0);
+  color += mat.diffuse * light.color * max(dot(N, L), 0.0); 
   color += mat.specular * light.color * pow(max(dot(reflect(-L, N), V), 0.0), mat.shininess);
-  //gl_FragColor =  vec4(color, 1.0);
-  gl_FragColor =  texture2D(sampler, fTex);
+  //test
+  vec4 tex = texture2D(sampler, fTex);
+  vec3 endColor =  tex.xyz * color;
+  //!test
+
+  gl_FragColor =  vec4(endColor, tex.a);
+  //gl_FragColor =  texture2D(sampler, fTex);
 }
