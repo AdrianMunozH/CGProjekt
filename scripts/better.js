@@ -185,7 +185,7 @@ function setUpArray(gl) {
         [12, 0, 0],            // position
         60,                  // angle
         [0, 1, 0],            // rotation
-        [1, 1, 1]             // scale
+        [0.5,0.5,0.5]             // scale
     );
 
     
