@@ -3,6 +3,9 @@ function degrees_to_radians(degrees)
   var pi = Math.PI;
   return degrees * (pi/180);
 }
+function toRadian(a) {
+	return a * Math.PI / 180;
+}
 
 let radians_to_degree = function(radians) {
     return radians * 180 / Math.PI;

@@ -1,7 +1,7 @@
 function degrees_to_radians(degrees)
 {
   var pi = Math.PI;
-  return degrees * (pi/180);
+  return degrees * pi/180;
 }
 
 let radians_to_degree = function(radians) {
@@ -67,7 +67,7 @@ let scalar = function (up,n) {
         
   console.log("u2: "+ u);
 }
-let rotate = function(out,matrix,angle) {
+let rotate = function(out,angle) {
   let rx = [1,0,0,0,0,Math.cos(angle),Math.sin(angle),0,0,-Math.sin(angle),Math.cos(angle),0,0,0,0,1];
   let ry = [Math.cos(angle),0,-Math.sin(angle),0,0,1,0,0,Math.sign(angle),0,Math.cos(angle),0,0,0,0,1];
   let rz = [Math.cos(angle),Math.sin(angle),0,0,-Math.sin(angle),Math.cos(angle),0,0,0,1,0,0,0,0,0,1];
@@ -136,4 +136,26 @@ let norm = function(out,vert) {
     out[1] = vert[1] * 1/magn;
     out[2] = vert[2] * 1/magn;
     return out;
+}
+
+
+let addVec3 = function(v1,v2) {
+  out = new Float32Array(3);
+  out[0] = v1[0] + v2[0];
+  out[1] = v1[1] + v2[1];
+  out[2] = v1[2] + v2[2];
+
+  return out;
+}
+
+let createVec3 = function() {
+  vec3 = new Float32Array(3);
+  vec3[0] = 0;
+  vec3[1] = 0;
+  vec3[2] = 0;
+  return vec3;
+}
+let createM4 = function() {
+  m4 = new Float32Array(16);
+  return m4;
 }

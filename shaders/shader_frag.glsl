@@ -35,6 +35,9 @@ void main()
   vec3 endColor =  tex.xyz * color;
   //!test
 
-  gl_FragColor =  vec4(endColor, tex.a);
   //gl_FragColor =  texture2D(sampler, fTex);
+  gl_FragColor = vec4(endColor,1.0);
 }
+
+
+
