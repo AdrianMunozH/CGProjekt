@@ -313,7 +313,7 @@ function setUpArray(gl) {
     setUpObjects[2] = setUpObject(
         gl,
         './models/book.obj', 'shader_vert.glsl', 'shader_frag.glsl',
-        'book-image',         // texture
+        'crate-image',         // texture
         [1, 1, 1], // ambient
         [1, 1, 1], // diffuse
         [0.58, 0.22, 0.07], // specular
@@ -328,14 +328,14 @@ function setUpArray(gl) {
     setUpObjects[3] = setUpObject(
         gl,
         './models/roomobjblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
-        'crate-image',         // texture
-        [1, 1, 1], // ambient
+        'room-image',         // texture
+        [2, 2, 2], // ambient
         [1, 1, 1], // diffuse
         [0.58, 0.22, 0.07], // specular
         5,               // shiny
-        [-3, -4, -12],            // position
-        180,                  // angle
-        [0, 190, 0],            // rotation
+        [-3, -3, -11],            // position links/rechts, oben/unten, forward/back
+        178,                  // angle
+        [0, 90, -2],            // rotation
         [0.5, 0.5, 0.5]             // scale
     );
 
