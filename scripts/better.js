@@ -1,11 +1,5 @@
 
 async function InitDemo() {
-
-
-
-
-
-
     // canvas,gl setup
     console.log('This is working');
     var canvas = document.getElementById('game-surface');
@@ -327,6 +321,21 @@ function setUpArray(gl) {
         [-3, 0, 0],            // position
         30,                  // angle
         [0, 1, 1],            // rotation
+        [0.5, 0.5, 0.5]             // scale
+    );
+
+    // room
+    setUpObjects[3] = setUpObject(
+        gl,
+        './models/roomobjblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+        'crate-image',         // texture
+        [1, 1, 1], // ambient
+        [1, 1, 1], // diffuse
+        [0.58, 0.22, 0.07], // specular
+        5,               // shiny
+        [-3, -4, -12],            // position
+        180,                  // angle
+        [0, 190, 0],            // rotation
         [0.5, 0.5, 0.5]             // scale
     );
 
