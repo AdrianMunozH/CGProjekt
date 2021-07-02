@@ -20,12 +20,6 @@ var scale = function(matrix, scaleVec) {
   
 }
 let trans = function(out,matrix, transVec) {
-  /*
-  out = new Float32Array;
-  for(let i = 0; i<matrix.length;i++) {
-    out[i] = matrix[i];
-  }
-  */
   out[12] = matrix[0] * transVec[0] + matrix[4] * transVec[1] + matrix[8] * transVec[2] + matrix[12];
   out[13] = matrix[1] * transVec[0] + matrix[5] * transVec[1] + matrix[9] * transVec[2] + matrix[13];
   out[14] = matrix[2] * transVec[0] + matrix[6] * transVec[1] + matrix[10] * transVec[2] + matrix[14];
@@ -155,7 +149,33 @@ let createVec3 = function() {
   vec3[2] = 0;
   return vec3;
 }
+
+let fromValues = function(x,y,z) {
+  out = createVec3();
+  out[0] = x;
+  out[1] = y;
+  out[2] = z;
+  return out;
+}
+
 let createM4 = function() {
   m4 = new Float32Array(16);
   return m4;
 }
+
+let negateVec3 = function(out) {
+  var out = out.map(value => -value);
+  return out;
+}
+
+let normalizeVec3 = function(out, v1) {
+  let lenght = v1[0]*v1[0] + v1[1]*v1[1] + v1[2]*v1[2];
+  if (lenght != 0) { // wollen ja nicht durch null teilen ;)
+      lenght = 1 / Math.sqrt(lenght);
+      out[0] = v1[0] * lenght;
+      out[1] = v1[1] * lenght;
+      out[2] = v1[2] * lenght;
+  }
+  return out;
+};
+

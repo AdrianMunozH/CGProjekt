@@ -1,4 +1,4 @@
-
+const nearFar = [0.01, 100];
 async function InitDemo() {
     // canvas,gl setup
     console.log('This is working');
@@ -20,16 +20,17 @@ async function InitDemo() {
         'moon-image',         // texture
         [1, 1, 1], // ambient
         [1, 1, 1], // diffuse
-        [0.58, 0.22, 0.07], // specular
+        [1, 1, 1], // specular
         5,               // shiny
-        [5, 5, 5],            // position
-        60,                  // angle
+        [0, 10, 0],            // position
+        0,                  // angle
         [0, 1, 0],            // rotation
         [0.5, 0.5, 0.5]             // scale
     );
 
+    // licht obj
     const light = {
-        position: [5, 5, 5],
+        position: [0, 0, 0],  // wird später gesetzt und eigentlich nur als getter genutzt
         color: [1.0, 1.0, 1.0],
         ambient: [0.0, 0.0, 0.0],
         model: lightModel
@@ -37,19 +38,17 @@ async function InitDemo() {
 
 
 
-
-
     // schatten
     let shadowMap = {};
-    //  shadowMap.createShaderProgram(gl,vShader,fShader);
+    shadowMap.program = await createShaderProgram(gl, './shaders/Shadow.vs.glsl', './shaders/Shadow.fs.glsl');
     shadowMap = createShadowMapCube(gl);
 
 
 
     let shadowGenMap = {};
-    // shadowGenMap.createShaderProgram(gl,vShader,fShader);
+    shadowGenMap.program = await createShaderProgram(gl, './shaders/ShadowMapGen.vs.glsl', './shaders/ShadowMapGen.fs.glsl');
 
-
+    
     //shadow map cameras
     shadowMap.shadowMapCameras = [
         new Camera(
@@ -84,6 +83,7 @@ async function InitDemo() {
             addVec3(createVec3(), [0, -1, 0])
         )
     ]
+    
     shadowMap.shadowMapCamerasVM = [
         createM4(),
         createM4(),
@@ -94,10 +94,9 @@ async function InitDemo() {
     ]
     shadowMap.shadowMapProj = createM4();
     // near und far muss noch getestet werden
-    mat4.perspective(shadowMap.shadowMapProj, degrees_to_radians(90), 1.0, 0.01, 20);
+    mat4.perspective(shadowMap.shadowMapProj, degrees_to_radians(90), canvas.width / canvas.height, nearFar[0], nearFar[1]);
 
 
-    console.log(shadowMap);
 
 
     // alles was gezeichnet werden soll
@@ -106,11 +105,36 @@ async function InitDemo() {
     models = await setUpArray(gl);
 
 
+    // dome
+
+    var dColor = new Float32Array(4);
+    dColor[0] = 1.0;
+    dColor[1] = 1.0;
+    dColor[2] = 1.0;
+    dColor[3] = 0.4;
+
+    let dome = await setUpDome(
+        gl,
+        './models/sphere.obj', 'dome_vert.glsl', 'dome_frag.glsl',
+        dColor, // color
+        [0, 0, 0],            // position
+        180,                  // angle
+        [0, 1, 0],            // rotation
+        [20, 20, 20]             // scale
+    );
+
+    // blending equation C¯result = C¯source ∗ Fsource + C¯destination ∗ Fdestination
+    gl.blendColor(0.0, 0.0, 0.0, 0.7);
+    gl.blendEquationSeparate(gl.FUNC_ADD, gl.FUNC_ADD);
+    //gl.SRC_ALPHA  => Factor is equal to the alpha component of the source color vector C¯source. 
+    // gl.ONE_MINUS_SRC_ALPHA => Factor is equal to 1−alpha of the source color vector C¯source.
+    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE);
+
 
 
     // camera setup
     actCamera = new Camera(
-        addVec3(createVec3(), [-5, 0, -20]),
+        addVec3(createVec3(), [-5, 0, -30]),
         createVec3(),
         addVec3(createVec3(), [0, 1, 0]),
     );
@@ -126,12 +150,14 @@ async function InitDemo() {
 
     //Draw loop
     async function loop() {
-        gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 
         gl.viewport(0, 0, canvas.width, canvas.height);
         gl.clearColor(0.2, 0.6, 0.7, 1.0);
-        //gl.enable(gl.CULL_FACE); //macht irgendwie teapot kaputt
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.enable(gl.DEPTH_TEST);
+        gl.enable(gl.CULL_FACE);
+        gl.frontFace(gl.CCW);
+        gl.cullFace(gl.BACK);
 
 
         // kamera
@@ -139,16 +165,37 @@ async function InitDemo() {
         actCamera.getViewMatrix(viewMatrix);
 
 
-        mat4.perspective(projMatrix, degrees_to_radians(90), canvas.clientWidth / canvas.clientHeight, 0.1, 1000.0);
+        mat4.perspective(projMatrix, degrees_to_radians(90), canvas.width / canvas.height, 0.1, 1000.0);
+
+        // blend aus
+        gl.depthMask(true);
+        gl.disable(gl.BLEND);
+
 
         // light
-        await drawObject(gl, lightModel, viewMatrix, projMatrix, light, true);
+        await drawObject(gl, lightModel, viewMatrix, projMatrix, light, true, false);
+        // view matrizen von cams aktualisieren
 
+        for (let i = 0; i < shadowMap.shadowMapCameras.length; i++) {
+            shadowMap.shadowMapCameras[i].position = fromValues(light.position); // unsicher ob das richtig ist
+            shadowMap.shadowMapCameras[i].getViewMatrix(shadowMap.shadowMapCamerasVM[i]);
+        }
+
+        // shadowmap
+        
+        //generateShadowMapCube(gl,shadowMap,shadowGenMap,light,models);
 
         // Rendert alle objekte
         for await (const element of models) {
-            drawObject(gl, element, viewMatrix, projMatrix, light, false);
+            drawObject(gl, element, viewMatrix, projMatrix, light, false, false);
         }
+
+        // blend an 
+        gl.depthMask(false);
+        gl.enable(gl.BLEND);
+
+        await drawObject(gl, dome, viewMatrix, projMatrix, light, false, true);
+
 
 
         requestAnimationFrame(await loop);
@@ -157,24 +204,32 @@ async function InitDemo() {
     requestAnimationFrame(loop);
 
 }
-//funktioniert noch nichts
+
 var Camera = function (position, lookAt, up) {
     this.position = position;
-    this.lookAt = lookAt;
+    //this.lookAt = lookAt;
     this.up = up;
+
+    this.forward = createVec3();
+    this.forward = addVec3(lookAt, negateVec3(this.position));
+
+
+    normalizeVec3(this.forward, this.forward); // bin mir nicht sicher ob normalisiert werden muss
+
 }
 
 // https://developer.mozilla.org/de/docs/Learn/JavaScript/Objects/Object_prototypes
 Camera.prototype.getViewMatrix = function (out) {
+    let lookAtVar = createVec3(); // wir müssen unsere lookat variable berechnen weil die shadow cameras sich nicht am ursprung befinden
+    lookAtVar = addVec3(this.position, this.forward);
     // falls wir nicht immer in den urprung gucken sollen müssen wir noch die derz. position addieren
-    lookAt(out, this.position, this.lookAt, this.up);
+    lookAt(out, this.position, lookAtVar, this.up);
     return out;
 }
 
 
 
-
-function drawObject(gl, currentObject, viewMatrix, projMatrix, light, isLight) {
+function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLight, isDome) {
     program = currentObject.program;
     var worldMatrix = new Float32Array(16);
 
@@ -183,11 +238,9 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, light, isLight) {
     // Draw Objects
     gl.useProgram(program);
 
-    gl.clearColor(0.75, 0.85, 0.8, 1.0);
-    gl.enable(gl.DEPTH_TEST);
 
 
-    const angle = performance.now() / 1000 / 6 * 2 * Math.PI * 1 / 2;
+
 
 
 
@@ -202,18 +255,25 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, light, isLight) {
     identity(worldMatrix);
 
     //lightning -- kann vielleicht nur in createObj() sein
-
-    const lightPositionUniformLocation = gl.getUniformLocation(program, 'light.position');
-    const lightColorUniformLocation = gl.getUniformLocation(program, 'light.color');
-    const lightAmbientUniformLocation = gl.getUniformLocation(program, 'light.ambient');
-    gl.uniform3f(lightPositionUniformLocation, light.position[0], light.position[1], light.position[2],);
-    gl.uniform3f(lightColorUniformLocation, light.color[0], light.color[1], light.color[2]);
-    gl.uniform3f(lightAmbientUniformLocation, light.ambient[0], light.ambient[1], light.ambient[2]);
-
-
+    if (!isDome) {
+        const lightPositionUniformLocation = gl.getUniformLocation(program, 'light.position');
+        const lightColorUniformLocation = gl.getUniformLocation(program, 'light.color');
+        const lightAmbientUniformLocation = gl.getUniformLocation(program, 'light.ambient');
+        gl.uniform3f(lightPositionUniformLocation, movingLight.position[0], movingLight.position[1], movingLight.position[2],);
+        gl.uniform3f(lightColorUniformLocation, movingLight.color[0], movingLight.color[1], movingLight.color[2]);
+        gl.uniform3f(lightAmbientUniformLocation, movingLight.ambient[0], movingLight.ambient[1], movingLight.ambient[2]);
+    }
+    const angle = performance.now() / 1000 / 6 * 2 * Math.PI * 1 / 2;
     if (isLight) {
-        mat4.translate(worldMatrix, worldMatrix, [Math.sin(angle) * 15, 0, Math.cos(angle) * 15]);
-        light.position = [-worldMatrix[12], worldMatrix[13], -worldMatrix[14]];
+
+        mat4.translate(worldMatrix, worldMatrix, currentObject.model.position);
+        mat4.translate(worldMatrix, worldMatrix, [Math.sin(angle)/10, 0, Math.cos(angle)/10]);
+        movingLight.position = [worldMatrix[12], worldMatrix[13], worldMatrix[14]];
+        currentObject.model.position = [worldMatrix[12], worldMatrix[13], worldMatrix[14]];
+
+        console.log(movingLight.position);
+        console.log(currentObject.model.position);
+        
 
     } else {
 
@@ -221,7 +281,10 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, light, isLight) {
         mat4.translate(worldMatrix, worldMatrix, currentObject.model.position);
         mat4.scale(worldMatrix, worldMatrix, currentObject.model.scale);
         mat4.rotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
+        //drehung
+        //mat4.rotate(worldMatrix, worldMatrix, -angle / 2, [0, 1, 0]);
     }
+
 
 
     gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
@@ -271,6 +334,33 @@ async function setUpObject(gl, objFile, vertShader, fragShader, texture, ambient
     return setUpObject;
 }
 
+// letztendlich einfach nur ohne texture und dafür eine farbe
+async function setUpDome(gl, objFile, vertShader, fragShader, color, position, angle, rotationAxis, scale) {
+
+    const oVertices = await fetchModel(objFile);
+
+
+    let modelObj = {
+        vertices: oVertices,
+        color: color,
+        position: position,
+        angle: angle,
+        rotationAxis: rotationAxis,
+        scale: scale
+    }
+
+    const setUpObject = await createDome(modelObj, gl);
+    //shader datein werden geladen
+    setUpObject.program = await createShaderProgram(gl, './shaders/'.concat(vertShader), './shaders/'.concat(fragShader));
+
+    if (!setUpObject.program) {
+        console.error('Cannot run without shader program!');
+        return;
+    }
+
+    return setUpObject;
+}
+
 function setUpArray(gl) {
     let setUpObjects = [];
 
@@ -285,9 +375,9 @@ function setUpArray(gl) {
         [0.55, 0.21, 0.07], // diffuse
         [0.58, 0.22, 0.07], // specular
         51.2,               // shiny
-        [0, 0, 0],            // position
+        [0, 4, 0],            // position
         -25,                  // angle
-        [1, 0, 0],            // rotation
+        [1, 0, 0],            // rotation axis
         [3, 3, 3],            // scale
     );
 
@@ -305,7 +395,7 @@ function setUpArray(gl) {
         5,               // shiny
         [5, 0, -10],            // position
         45,                  // angle
-        [1, 0, 0],            // rotation
+        [1, 0, 0],            // rotation axis
         [3, 3, 3]             // scale
     );
 
@@ -320,7 +410,7 @@ function setUpArray(gl) {
         5,               // shiny
         [-3, 0, 0],            // position
         30,                  // angle
-        [0, 1, 1],            // rotation
+        [0, 1, 0],            // rotation axis
         [0.5, 0.5, 0.5]             // scale
     );
 
@@ -333,11 +423,14 @@ function setUpArray(gl) {
         [1, 1, 1], // diffuse
         [0.58, 0.22, 0.07], // specular
         5,               // shiny
-        [-3, -4, -12],            // position
+        [-3, -4, -8],            // position
         180,                  // angle
-        [0, 190, 0],            // rotation
-        [0.5, 0.5, 0.5]             // scale
+        [0, 1, 0],            // rotation axis
+        [2.0, 2.0, 2.0]             // scale
     );
+
+
+
 
 
 
@@ -360,7 +453,7 @@ async function createObject(model, gl) {
     // create texture
     obj.texture = gl.createTexture();
     //      gl.activeTexture(gl.TEXTURE13); ist in der übung weiß nicht was das bringt, vllt fürs video
-    gl.activeTexture(gl.TEXTURE0); // ich glaube es gab ein array an texture an das ist die stelle 0
+    gl.activeTexture(gl.TEXTURE0); // es gab ein array an texture an das ist die stelle 0
     /*
     https://webglfundamentals.org/webgl/lessons/webgl-3d-textures.html
     You can choose what WebGL does by setting the texture filtering for each texture. There are 6 modes
@@ -468,6 +561,58 @@ async function createObject(model, gl) {
     return obj;
 }
 
+
+
+async function createDome(model, gl) {
+
+    const obj = {};
+
+    obj.model = model;
+    obj.vertexBufferObject = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, obj.vertexBufferObject);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.vertices), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+
+    obj.draw = function () {
+
+        // buffer wird nochmal gebindet für die loop
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBufferObject);
+
+        var positionAttribLocation = gl.getAttribLocation(this.program, 'vPosition');
+
+        // ersten 3 werte sind die vertices
+        gl.vertexAttribPointer(
+            positionAttribLocation, // Attribute location
+            3, // Number of elements per attribute
+            gl.FLOAT, // Type of elements
+            gl.FALSE,
+            8 * Float32Array.BYTES_PER_ELEMENT, // Size of an individual vertex
+            0 // Offset from the beginning of a single vertex to this attribute
+        );
+        gl.enableVertexAttribArray(positionAttribLocation);
+
+        var colorAttribLocation = gl.getAttribLocation(program, 'vColor');
+
+
+
+
+        gl.vertexAttrib4fv(colorAttribLocation, this.model.color);
+
+        gl.drawArrays(gl.TRIANGLES, 0, model.vertices.length / 8);
+
+
+        // unbind everything
+        gl.disableVertexAttribArray(colorAttribLocation);
+        gl.disableVertexAttribArray(positionAttribLocation);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+
+
+    }
+    return obj;
+}
+
 function createShadowMapCube(gl) {
     let ShadowMap = {};
 
@@ -476,8 +621,8 @@ function createShadowMapCube(gl) {
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, ShadowMap.shadowMapCube);
     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); // doku hat gesagt immer clamp to edge für cube maps benutzen
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
     for (var i = 0; i < 6; i++) {
         gl.texImage2D(
@@ -510,7 +655,7 @@ function createShadowMapCube(gl) {
     return ShadowMap;
 }
 
-function generateShadowMapCube(gl, shadowMap) {
+function generateShadowMapCube(gl, shadowMap, shadowGenMap, light, shadowModels) {
     gl.useProgram(shadowGenMap.program);
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMap.shadowMapCube);
     gl.bindFramebuffer(gl.FRAMEBUFFER, shadowMap.framebuffer);
@@ -518,38 +663,74 @@ function generateShadowMapCube(gl, shadowMap) {
 
     gl.viewport(0, 0, 2048, 2048);
     gl.enable(gl.DEPTH_TEST);
-    gl.enable(CULL_FACE);
+    //gl.enable(CULL_FACE);
 
     // uniforms müssen gesetzt werden
+    let mProjLoc = gl.getUniformLocation(shadowGenMap.program, 'mProj');
+    let mViewLoc = gl.getUniformLocation(shadowGenMap.program, 'mView');
+    let mWorldLoc = gl.getUniformLocation(shadowGenMap.program, 'mWorld');
 
-    // near far
+    let lightPosLoc = gl.getUniformLocation(shadowGenMap.program, 'pointLightPosition');
+    let nearFarLoc = gl.getUniformLocation(shadowGenMap.program, 'shadowClipNearFar');
 
+    //attrib
+    let vPosLoc = gl.getAttribLocation(shadowGenMap.program, 'vPos');
+
+
+    // near far -- werte muss noch rumprobiert werden
+    gl.uniform2fv(nearFarLoc, fromValues(0.05, 15.0));
     // pointlightposition
-
-
+    gl.uniform3fv(lightPosLoc, light.position);
     // proj matrix     
-
+    gl.uniformMatrix4fv(mProjLoc, gl.FALSE, shadowMap.shadowMapProj);
 
     for (let i = 0; i < shadowMap.shadowMapCameras.length; i++) {
-        let matViewUniformLocation = gl.getUniformLocation(shadowMap.programprogram, 'mView');
         gl.uniformMatrix4fv(
-            matViewUniformLocation,
+            mViewLoc,
             gl.FALSE,
             shadowMap.shadowMapCameras[i].getViewMatrix(shadowMap.shadowMapCamerasVM[i])
         );
         // setzt das ziel vom framebuffer 
-        gl.frameBufferTexture2D(
+        gl.framebufferTexture2D(
             gl.FRAMEBUFFER,
             gl.COLOR_ATTACHMENT0,
             gl.TEXTURE_CUBE_MAP_POSITIVE_X + i,
             shadowMap.shadowMapCube,
             0
         );
-        gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,shadowMap.renderbuffer);
-        
-        gl.clearColor(1,1,1,1);
+        gl.framebufferRenderbuffer(
+            gl.FRAMEBUFFER,
+            gl.DEPTH_ATTACHMENT,
+            gl.RENDERBUFFER,
+            shadowMap.renderbuffer);
+
+        gl.clearColor(1, 1, 1, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
     }
+    // models rendern
+
+    shadowModels.forEach(sModel => {
+        // als letzter parameter models[n].position oder neue worldmatrix
+        gl.uniformMatrix4fv(mWorldLoc, gl.FALSE, createM4());
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, sModel.vertexBufferObject);
+        gl.vertexAttribPointer(
+            vPosLoc,
+            3,
+            gl.FLOAT,
+            gl.FALSE,
+            0,
+            0
+        );
+
+        gl.enableVertexAttribArray(vPosLoc);
+        gl.drawArrays(gl.TRIANGLES, 0, sModel.model.vertices.length / 8);
+
+
+        // unbind
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    });
+
 
 
 
