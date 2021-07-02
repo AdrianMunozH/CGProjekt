@@ -103,8 +103,8 @@ async function InitDemo() {
     // Rendert alle objekte
     for await (const element of models) {
 
-      // dome index = 2
-      if(index == 2) {
+      // dome index = 6
+      if(index == 6) {
         gl.depthMask(false);
         gl.enable(gl.BLEND);
       }
@@ -289,25 +289,6 @@ function setUpArray(gl) {
   let setUpObjects = [];
 
 
-  /*
-    // teapot
-    setUpObjects[0] = setUpObject(
-        gl,
-        './models/teapot.obj', 'shader_vert.glsl', 'shader_frag.glsl', //obj file und shader
-        'crate-image',         // texture
-        [1.0, 1.0, 1.0], // ambient
-        [0.55, 0.21, 0.07], // diffuse
-        [0.58, 0.22, 0.07], // specular
-        51.2,               // shiny
-        [0, 4, 0],            // position
-        -25,                  // angle
-        [1, 0, 0],            // rotation axis
-        [3, 3, 3],            // scale
-    );
-      */
-  //skybox
-
-
   // cube
   setUpObjects[0] = setUpObject(
     gl,
@@ -318,31 +299,16 @@ function setUpArray(gl) {
     [0.58, 0.22, 0.07], // specular
     5,               // shiny
     1.0,                //alpha
-    [5, 0, -10],            // position
-    45,                  // angle
+    [0, -1.5, 0],            // position
+    0,                  // angle
     [1, 0, 0],            // rotation axis
     [3, 3, 3]             // scale
   );
-  /*
-  // book
-  setUpObjects[2] = setUpObject(
-      gl,
-      './models/book.obj', 'shader_vert.glsl', 'shader_frag.glsl',
-      'book-image',         // texture
-      [1, 1, 1], // ambient
-      [1, 1, 1], // diffuse
-      [0.58, 0.22, 0.07], // specular
-      5,               // shiny
-      [-3, 0, 0],            // position
-      30,                  // angle
-      [0, 1, 0],            // rotation axis
-      [0.5, 0.5, 0.5]             // scale
-  );
-    */
+
   // room
   setUpObjects[1] = setUpObject(
     gl,
-    './models/roomobjblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+    './models/innenblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
     'room-image',         // texture
     [1, 1, 1], // ambient
     [1, 1, 1], // diffuse
@@ -356,20 +322,86 @@ function setUpArray(gl) {
   );
 
 
+  
+
+  // room
   setUpObjects[2] = setUpObject(
     gl,
-    './models/sphere.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+    './models/aussenblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
     'room-image',         // texture
     [1, 1, 1], // ambient
-    [0.2, 0.2, 0.2], // diffuse
-    [0.0, 0.0, 0.0], // specular
-    100,               // shiny
-    0.1,                //alpha
-    [0, 0, 0],            // position
+    [1, 1, 1], // diffuse
+    [0.58, 0.22, 0.07], // specular
+    5,               // shiny
+    1.0,                //alpha
+    [0, -4, 0],            // position
     180,                  // angle
-    [0, 1, 0],            // rotation
-    [20, 20, 20]             // scale
+    [0, 1, 0],            // rotation axis
+    [1.25, 1.25, 1.25]             // scale
   );
+
+  // room
+  setUpObjects[3] = setUpObject(
+    gl,
+    './models/pcobjblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+    'computer-image',         // texture
+    [1, 1, 1], // ambient
+    [1, 1, 1], // diffuse
+    [0.58, 0.22, 0.07], // specular
+    5,               // shiny
+    1.0,                //alpha
+    [0, -4, 0],            // position
+    180,                  // angle
+    [0, 1, 0],            // rotation axis
+    [1.25, 1.25, 1.25]             // scale
+  );
+
+    // room
+    setUpObjects[4] = setUpObject(
+        gl,
+        './models/teppichblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+        'computer-image',         // texture
+        [1, 1, 1], // ambient
+        [1, 1, 1], // diffuse
+        [0.58, 0.22, 0.07], // specular
+        5,               // shiny
+        1.0,                //alpha
+        [0, -4, 0],            // position
+        180,                  // angle
+        [0, 1, 0],            // rotation axis
+        [1.25, 1.25, 1.25]             // scale
+      );
+
+     // room
+     setUpObjects[5] = setUpObject(
+        gl,
+        './models/woodstuffobjblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+        'wood-image',         // texture
+        [1, 1, 1], // ambient
+        [1, 1, 1], // diffuse
+        [0.58, 0.22, 0.07], // specular
+        5,               // shiny
+        1.0,                //alpha
+        [0, -4, 0],            // position
+        180,                  // angle
+        [0, 1, 0],            // rotation axis
+        [1.25, 1.25, 1.25]             // scale
+      );
+
+      setUpObjects[6] = setUpObject(
+        gl,
+        './models/sphere.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+        'room-image',         // texture
+        [1, 1, 1], // ambient
+        [0.2, 0.2, 0.2], // diffuse
+        [0.0, 0.0, 0.0], // specular
+        100,               // shiny
+        0.1,                //alpha
+        [0, 0, 0],            // position
+        180,                  // angle
+        [0, 1, 0],            // rotation
+        [20, 20, 20]             // scale
+      );
 
 
 
