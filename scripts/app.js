@@ -1,4 +1,4 @@
-const nearFar = [0.01, 100];
+//const nearFar = [0.01, 100]; brauchen wir vllt gar nicht mehr 
 async function InitDemo() {
     // canvas,gl setup
     console.log('This is working');
@@ -22,7 +22,7 @@ async function InitDemo() {
         [1, 1, 1], // diffuse
         [1, 1, 1], // specular
         5,               // shiny
-        [0, 10, 0],            // position
+        [0, 3,10],            // position
         0,                  // angle
         [0, 1, 0],            // rotation
         [0.5, 0.5, 0.5]             // scale
@@ -35,12 +35,6 @@ async function InitDemo() {
         ambient: [0.0, 0.0, 0.0],
         model: lightModel
     };
-
-
-    // near und far muss noch getestet werden
-    mat4.perspective(shadowMap.shadowMapProj, degrees_to_radians(90), canvas.width / canvas.height, nearFar[0], nearFar[1]);
-
-
 
 
     // alles was gezeichnet werden soll
@@ -78,7 +72,7 @@ async function InitDemo() {
 
     // camera setup
     actCamera = new Camera(
-        addVec3(createVec3(), [-5, 0, -30]),
+        addVec3(createVec3(), [-5, 0, -60]),
         createVec3(),
         addVec3(createVec3(), [0, 1, 0]),
     );
@@ -87,6 +81,7 @@ async function InitDemo() {
     // muss nochmal alles durchgegangen werden
     gl.clearColor(0.75, 0.85, 0.8, 1.0);
     gl.enable(gl.DEPTH_TEST);
+
     var worldMatrix = new Float32Array(16);
     var viewMatrix = new Float32Array(16);
     var projMatrix = new Float32Array(16);
@@ -105,27 +100,21 @@ async function InitDemo() {
 
 
         // kamera
-        //lookAt(viewMatrix, [-5, 0, -20], [0, 0, 0], [0, 1, 0]);
         actCamera.getViewMatrix(viewMatrix);
 
 
-        mat4.perspective(projMatrix, degrees_to_radians(90), canvas.width / canvas.height, 0.1, 1000.0);
+        mat4.perspective(projMatrix, degrees_to_radians(45), canvas.width / canvas.height, 0.1, 1000.0);
 
         // blend aus
         gl.depthMask(true);
         gl.disable(gl.BLEND);
 
-
+        console.log(light.position);
         // light
         await drawObject(gl, lightModel, viewMatrix, projMatrix, light, true, false);
         // view matrizen von cams aktualisieren
 
-        for (let i = 0; i < shadowMap.shadowMapCameras.length; i++) {
-            shadowMap.shadowMapCameras[i].position = fromValues(light.position); // unsicher ob das richtig ist
-            shadowMap.shadowMapCameras[i].getViewMatrix(shadowMap.shadowMapCamerasVM[i]);
-        }
-
-
+    
         // Rendert alle objekte
         for await (const element of models) {
             drawObject(gl, element, viewMatrix, projMatrix, light, false, false);
@@ -149,6 +138,7 @@ async function InitDemo() {
 var Camera = function (position, lookAt, up) {
     this.position = position;
     //this.lookAt = lookAt;
+
     this.up = up;
     this.forward = createVec3();
     this.forward = addVec3(lookAt, negateVec3(this.position));
@@ -196,6 +186,7 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLi
 
     //lightning -- kann vielleicht nur in createObj() sein
     if (!isDome) {
+        console.log(currentObject + " : " + movingLight.position);
         const lightPositionUniformLocation = gl.getUniformLocation(program, 'light.position');
         const lightColorUniformLocation = gl.getUniformLocation(program, 'light.color');
         const lightAmbientUniformLocation = gl.getUniformLocation(program, 'light.ambient');
@@ -203,6 +194,10 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLi
         gl.uniform3f(lightColorUniformLocation, movingLight.color[0], movingLight.color[1], movingLight.color[2]);
         gl.uniform3f(lightAmbientUniformLocation, movingLight.ambient[0], movingLight.ambient[1], movingLight.ambient[2]);
     }
+
+
+
+
     const angle = performance.now() / 1000 / 6 * 2 * Math.PI * 1 / 2;
     if (isLight) {
 
@@ -211,8 +206,8 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLi
         movingLight.position = [worldMatrix[12], worldMatrix[13], worldMatrix[14]];
         currentObject.model.position = [worldMatrix[12], worldMatrix[13], worldMatrix[14]];
 
-        console.log(movingLight.position);
-        console.log(currentObject.model.position);
+        //console.log(movingLight.position);
+        //console.log(currentObject.model.position);
         
 
     } else {
@@ -305,7 +300,7 @@ function setUpArray(gl) {
     let setUpObjects = [];
 
 
-
+  /*
     // teapot
     setUpObjects[0] = setUpObject(
         gl,
@@ -320,12 +315,12 @@ function setUpArray(gl) {
         [1, 0, 0],            // rotation axis
         [3, 3, 3],            // scale
     );
-
+      */
     //skybox
 
 
     // cube
-    setUpObjects[1] = setUpObject(
+    setUpObjects[0] = setUpObject(
         gl,
         './models/cube.obj', 'shader_vert.glsl', 'shader_frag.glsl',
         'crate-image',         // texture
@@ -338,7 +333,7 @@ function setUpArray(gl) {
         [1, 0, 0],            // rotation axis
         [3, 3, 3]             // scale
     );
-
+    /*
     // book
     setUpObjects[2] = setUpObject(
         gl,
@@ -353,20 +348,20 @@ function setUpArray(gl) {
         [0, 1, 0],            // rotation axis
         [0.5, 0.5, 0.5]             // scale
     );
-
+      */
     // room
-    setUpObjects[3] = setUpObject(
+    setUpObjects[1] = setUpObject(
         gl,
         './models/roomobjblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
-        'crate-image',         // texture
+        'room-image',         // texture
         [1, 1, 1], // ambient
         [1, 1, 1], // diffuse
         [0.58, 0.22, 0.07], // specular
         5,               // shiny
-        [-3, -4, -8],            // position
+        [0, -4, 0],            // position
         180,                  // angle
         [0, 1, 0],            // rotation axis
-        [2.0, 2.0, 2.0]             // scale
+        [1.25, 1.25, 1.25]             // scale
     );
 
 
