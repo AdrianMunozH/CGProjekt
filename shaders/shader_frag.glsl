@@ -5,6 +5,7 @@ struct MaterialParams {
   vec3 diffuse;
   vec3 specular;
   float shininess;
+  float alpha;
 };
 
 struct LightParams {
@@ -36,7 +37,7 @@ void main()
   //!test
 
   //gl_FragColor =  texture2D(sampler, fTex);
-  gl_FragColor = vec4(endColor,1.0);
+  gl_FragColor = vec4(endColor,mat.alpha);
   // eigentlich endColor benutzen
 }
 

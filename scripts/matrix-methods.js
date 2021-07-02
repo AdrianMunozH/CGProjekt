@@ -70,6 +70,9 @@ let rotate = function(out,angle) {
 
   return out;
 }
+let perspective = function(out, fov, aspect,near,far) {
+
+}
 
 let lookAt = function(out,eye,center,up) {
         let n = [];
