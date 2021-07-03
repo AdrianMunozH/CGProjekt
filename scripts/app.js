@@ -15,15 +15,15 @@ async function InitDemo() {
 
   var lColor = new Float32Array(4);
   lColor[0] = 1.0;
-  lColor[1] = 1.0;
-  lColor[2] = 1.0;
-  lColor[3] = 0.1;
+  lColor[1] = 0.96;
+  lColor[2] = 0.9;
+  lColor[3] = 0.9;
 
   var lightModel = await setUpLight(
     gl,
     './models/sphere.obj', 'light_vert.glsl', 'light_frag.glsl',
     lColor, // color
-    [0, 8, 0],            // position
+    [0, 6, 0],            // position
     0,                  // angle
     [0, 1, 0],            // rotation
     [0.5, 0.5, 0.5]             // scale
@@ -32,10 +32,27 @@ async function InitDemo() {
   // licht obj
   const light = {
     position: [0, 0, 0],  // wird später gesetzt und eigentlich nur als getter genutzt
-    color: [1.0, 1.0, 1.0],
+    color: [1.0, 0.96, 0.9],
     ambient: [0.0, 0.0, 0.0],
     model: lightModel
   };
+
+  //last and change dome index
+  const dome = await setUpObject(
+    gl,
+    './models/sphere.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+    'room-image',         // texture
+    [1, 1, 1], // ambient
+    [0.2, 0.2, 0.2], // diffuse
+    [1.0, 1.0, 1.0], // specular
+    100,               // shiny
+    0.1,                //alpha
+    [0, 0, 0],            // position
+    180,                  // angle
+    [0, 1, 0],            // rotation
+    [20, 20, 20]             // scale
+  );
+
 
 
   // alles was gezeichnet werden soll
@@ -57,7 +74,7 @@ async function InitDemo() {
 
   // camera setup
   actCamera = new Camera(
-    addVec3(createVec3(), [0, 0, -60]),
+    addVec3(createVec3(), [0, 15, -60]),
     createVec3(),
     addVec3(createVec3(), [0, 1, 0]),
   );
@@ -67,7 +84,7 @@ async function InitDemo() {
   gl.clearColor(0.75, 0.85, 0.8, 1.0);
   gl.enable(gl.DEPTH_TEST);
 
-  var worldMatrix = new Float32Array(16);
+
   var viewMatrix = new Float32Array(16);
   var projMatrix = new Float32Array(16);
 
@@ -94,19 +111,22 @@ async function InitDemo() {
     gl.depthMask(true);
     gl.disable(gl.BLEND);
 
-  
-    // light
-    await drawObject(gl, lightModel, viewMatrix, projMatrix, light, true);
+
+
     // view matrizen von cams aktualisieren
 
     index = 0;
     // Rendert alle objekte
     for await (const element of models) {
-
-      // dome index = 7
-      if(index == 7) {
+      if (index == 5) {
         gl.depthMask(false);
         gl.enable(gl.BLEND);
+        await drawObject(gl, dome, viewMatrix, projMatrix, light, false);
+        // light
+        await drawObject(gl, lightModel, viewMatrix, projMatrix, light, true);
+
+        gl.depthMask(true);
+        gl.disable(gl.BLEND);
       }
 
 
@@ -114,12 +134,13 @@ async function InitDemo() {
       index++;
     }
 
-    // blend an 
-    //gl.depthMask(false);
-    //gl.enable(gl.BLEND);
-
-    //await drawObject(gl, models[1], viewMatrix, projMatrix, light, false);
-
+    /*
+    gl.depthMask(false);
+    gl.enable(gl.BLEND);
+    await drawObject(gl, dome, viewMatrix, projMatrix, light, false);
+    // light
+    await drawObject(gl, lightModel, viewMatrix, projMatrix, light, true);
+    */
 
 
     requestAnimationFrame(await loop);
@@ -131,23 +152,24 @@ async function InitDemo() {
 
 var Camera = function (position, lookAt, up) {
   this.position = position;
-  //this.lookAt = lookAt;
-
+  this.lookAt = lookAt;
   this.up = up;
+  /*
+  
   this.forward = createVec3();
   this.forward = addVec3(lookAt, negateVec3(this.position));
-
+  
 
   normalizeVec3(this.forward, this.forward); // bin mir nicht sicher ob normalisiert werden muss
-
+*/
 }
 
 // https://developer.mozilla.org/de/docs/Learn/JavaScript/Objects/Object_prototypes
 Camera.prototype.getViewMatrix = function (out) {
-  let lookAtVar = createVec3(); // wir müssen unsere lookat variable berechnen weil die shadow cameras sich nicht am ursprung befinden
-  lookAtVar = addVec3(this.position, this.forward);
+  //let lookAtVar = createVec3(); // wir müssen unsere lookat variable berechnen weil die shadow cameras sich nicht am ursprung befinden
+  //lookAtVar = addVec3(this.position, this.forward);
   // falls wir nicht immer in den urprung gucken sollen müssen wir noch die derz. position addieren
-  lookAt(out, this.position, lookAtVar, this.up);
+  lookAt(out, this.position, this.lookAt, this.up);
   return out;
 }
 
@@ -184,7 +206,7 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLi
   if (isLight) {
 
     mat4.translate(worldMatrix, worldMatrix, currentObject.model.position);
-    //mat4.translate(worldMatrix, worldMatrix, [Math.sin(angle) / 10, 0, Math.cos(angle) / 10]);
+    mat4.translate(worldMatrix, worldMatrix, [Math.sin(angle * 2) / 10, 0, 0]);
     movingLight.position = [worldMatrix[12], worldMatrix[13], worldMatrix[14]];
     currentObject.model.position = [worldMatrix[12], worldMatrix[13], worldMatrix[14]];
 
@@ -289,24 +311,8 @@ function setUpArray(gl) {
   let setUpObjects = [];
 
 
-  // cube
-  setUpObjects[0] = setUpObject(
-    gl,
-    './models/cube.obj', 'shader_vert.glsl', 'shader_frag.glsl',
-    'crate-image',         // texture
-    [0.23, 0.09, 0.03], // ambient
-    [0.55, 0.21, 0.07], // diffuse
-    [0.58, 0.22, 0.07], // specular
-    5,               // shiny
-    1.0,                //alpha
-    [0, -1.5, 0],            // position
-    0,                  // angle
-    [1, 0, 0],            // rotation axis
-    [3, 3, 3]             // scale
-  );
-
   // innen
-  setUpObjects[1] = setUpObject(
+  setUpObjects[0] = setUpObject(
     gl,
     './models/innenblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
     'innen-image',         // texture
@@ -322,7 +328,7 @@ function setUpArray(gl) {
   );
 
   // aussen
-  setUpObjects[2] = setUpObject(
+  setUpObjects[1] = setUpObject(
     gl,
     './models/aussenblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
     'room-image',         // texture
@@ -338,7 +344,7 @@ function setUpArray(gl) {
   );
 
   // computer
-  setUpObjects[3] = setUpObject(
+  setUpObjects[2] = setUpObject(
     gl,
     './models/pcobjblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
     'computer-image',         // texture
@@ -353,72 +359,72 @@ function setUpArray(gl) {
     [1.25, 1.25, 1.25]             // scale
   );
 
-    // teppich
-    setUpObjects[4] = setUpObject(
-        gl,
-        './models/teppichblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
-        'teppich-image',         // texture
-        [1, 1, 1], // ambient
-        [1, 1, 1], // diffuse
-        [0.58, 0.22, 0.07], // specular
-        5,               // shiny
-        1.0,                //alpha
-        [0, -8, 0],            // position
-        180,                  // angle
-        [0, 1, 0],            // rotation axis
-        [1.25, 1.25, 1.25]             // scale
-      );
+  // teppich
+  setUpObjects[3] = setUpObject(
+    gl,
+    './models/teppichblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+    'teppich-image',         // texture
+    [1, 1, 1], // ambient
+    [1, 1, 1], // diffuse
+    [0.1, 0.1, 0.1], // specular
+    5,               // shiny
+    1.0,                //alpha
+    [0, -8, 0],            // position
+    180,                  // angle
+    [0, 1, 0],            // rotation axis
+    [1.25, 1.25, 1.25]             // scale
+  );
 
-     // wood
-     setUpObjects[5] = setUpObject(
-        gl,
-        './models/woodstuffobjblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
-        'wood-image',         // texture
-        [1, 1, 1], // ambient
-        [1, 1, 1], // diffuse
-        [0.58, 0.22, 0.07], // specular
-        5,               // shiny
-        1.0,                //alpha
-        [0, -8, 0],            // position
-        180,                  // angle
-        [0, 1, 0],            // rotation axis
-        [1.25, 1.25, 1.25]             // scale
-      );
+  // wood
+  setUpObjects[4] = setUpObject(
+    gl,
+    './models/woodstuffobjblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+    'wood-image',         // texture
+    [1, 1, 1], // ambient
+    [1, 1, 1], // diffuse
+    [0.58, 0.22, 0.07], // specular
+    5,               // shiny
+    1.0,                //alpha
+    [0, -8, 0],            // position
+    180,                  // angle
+    [0, 1, 0],            // rotation axis
+    [1.25, 1.25, 1.25]             // scale
+  );
 
-      // base
-     setUpObjects[6] = setUpObject(
-      gl,
-      './models/baseblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
-      'innen-image',         // texture
-      [1, 1, 1], // ambient
-      [1, 1, 1], // diffuse
-      [0.58, 0.22, 0.07], // specular
-      5,               // shiny
-      1.0,                //alpha
-      [0, -25, 0],            // position
-      180,                  // angle
-      [0, 1, 0],            // rotation axis
-      [1.8, 1.5, 1.5]             // scale
-    );
+  // base
+  setUpObjects[5] = setUpObject(
+    gl,
+    './models/baseblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+    'innen-image',         // texture
+    [1, 1, 1], // ambient
+    [1, 1, 1], // diffuse
+    [0.58, 0.22, 0.07], // specular
+    5,               // shiny
+    1.0,                //alpha
+    [0, -25, 0],            // position
+    180,                  // angle
+    [0, 1, 0],            // rotation axis
+    [1.8, 1.5, 1.5]             // scale
+  );
 
-      //light
-      //last and change dome index
-      setUpObjects[7] = setUpObject(
-        gl,
-        './models/sphere.obj', 'shader_vert.glsl', 'shader_frag.glsl',
-        'room-image',         // texture
-        [1, 1, 1], // ambient
-        [0.2, 0.2, 0.2], // diffuse
-        [0.0, 0.0, 0.0], // specular
-        100,               // shiny
-        0.1,                //alpha
-        [0, 0, 0],            // position
-        180,                  // angle
-        [0, 1, 0],            // rotation
-        [20, 20, 20]             // scale
-      );
+  /*
+  //last and change dome index
+  setUpObjects[6] = setUpObject(
+    gl,
+    './models/sphere.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+    'room-image',         // texture
+    [1, 1, 1], // ambient
+    [0.2, 0.2, 0.2], // diffuse
+    [1.0, 1.0, 1.0], // specular
+    100,               // shiny
+    0.1,                //alpha
+    [0, 0, 0],            // position
+    180,                  // angle
+    [0, 1, 0],            // rotation
+    [20, 20, 20]             // scale
+  );
 
-
+    */
 
 
 
