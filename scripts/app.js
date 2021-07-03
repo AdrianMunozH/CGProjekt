@@ -205,7 +205,7 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLi
     mat4.scale(worldMatrix, worldMatrix, currentObject.model.scale);
     mat4.rotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
     //drehung
-    mat4.rotate(worldMatrix, worldMatrix, -angle / 2, [0, 1, 0]);
+    //mat4.rotate(worldMatrix, worldMatrix, -angle / 2, [0, 1, 0]);
   }
 
 
@@ -305,11 +305,11 @@ function setUpArray(gl) {
     [3, 3, 3]             // scale
   );
 
-  // room
+  // innen
   setUpObjects[1] = setUpObject(
     gl,
     './models/innenblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
-    'room-image',         // texture
+    'innen-image',         // texture
     [1, 1, 1], // ambient
     [1, 1, 1], // diffuse
     [0.58, 0.22, 0.07], // specular
@@ -321,10 +321,7 @@ function setUpArray(gl) {
     [1.25, 1.25, 1.25]             // scale
   );
 
-
-  
-
-  // room
+  // aussen
   setUpObjects[2] = setUpObject(
     gl,
     './models/aussenblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
@@ -340,7 +337,7 @@ function setUpArray(gl) {
     [1.25, 1.25, 1.25]             // scale
   );
 
-  // room
+  // computer
   setUpObjects[3] = setUpObject(
     gl,
     './models/pcobjblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
@@ -356,11 +353,11 @@ function setUpArray(gl) {
     [1.25, 1.25, 1.25]             // scale
   );
 
-    // room
+    // teppich
     setUpObjects[4] = setUpObject(
         gl,
         './models/teppichblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
-        'computer-image',         // texture
+        'teppich-image',         // texture
         [1, 1, 1], // ambient
         [1, 1, 1], // diffuse
         [0.58, 0.22, 0.07], // specular
@@ -372,7 +369,7 @@ function setUpArray(gl) {
         [1.25, 1.25, 1.25]             // scale
       );
 
-     // room
+     // wood
      setUpObjects[5] = setUpObject(
         gl,
         './models/woodstuffobjblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
@@ -388,6 +385,7 @@ function setUpArray(gl) {
         [1.25, 1.25, 1.25]             // scale
       );
 
+      //light
       setUpObjects[6] = setUpObject(
         gl,
         './models/sphere.obj', 'shader_vert.glsl', 'shader_frag.glsl',
