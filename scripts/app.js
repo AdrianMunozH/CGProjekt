@@ -76,7 +76,7 @@ async function InitDemo() {
   async function loop() {
 
     gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.clearColor(0.2, 0.6, 0.7, 1.0);
+    gl.clearColor(0.5, 0.82, 0.94, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
@@ -103,8 +103,8 @@ async function InitDemo() {
     // Rendert alle objekte
     for await (const element of models) {
 
-      // dome index = 6
-      if(index == 6) {
+      // dome index = 7
+      if(index == 7) {
         gl.depthMask(false);
         gl.enable(gl.BLEND);
       }
@@ -205,7 +205,7 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLi
     mat4.scale(worldMatrix, worldMatrix, currentObject.model.scale);
     mat4.rotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
     //drehung
-    //mat4.rotate(worldMatrix, worldMatrix, -angle / 2, [0, 1, 0]);
+    mat4.rotate(worldMatrix, worldMatrix, -angle / 2, [0, 1, 0]);
   }
 
 
@@ -315,7 +315,7 @@ function setUpArray(gl) {
     [0.58, 0.22, 0.07], // specular
     5,               // shiny
     1.0,                //alpha
-    [0, -4, 0],            // position
+    [0, -8, 0],            // position
     180,                  // angle
     [0, 1, 0],            // rotation axis
     [1.25, 1.25, 1.25]             // scale
@@ -331,7 +331,7 @@ function setUpArray(gl) {
     [0.58, 0.22, 0.07], // specular
     5,               // shiny
     1.0,                //alpha
-    [0, -4, 0],            // position
+    [0, -8, 0],            // position
     180,                  // angle
     [0, 1, 0],            // rotation axis
     [1.25, 1.25, 1.25]             // scale
@@ -347,7 +347,7 @@ function setUpArray(gl) {
     [0.58, 0.22, 0.07], // specular
     5,               // shiny
     1.0,                //alpha
-    [0, -4, 0],            // position
+    [0, -8, 0],            // position
     180,                  // angle
     [0, 1, 0],            // rotation axis
     [1.25, 1.25, 1.25]             // scale
@@ -363,7 +363,7 @@ function setUpArray(gl) {
         [0.58, 0.22, 0.07], // specular
         5,               // shiny
         1.0,                //alpha
-        [0, -4, 0],            // position
+        [0, -8, 0],            // position
         180,                  // angle
         [0, 1, 0],            // rotation axis
         [1.25, 1.25, 1.25]             // scale
@@ -379,14 +379,31 @@ function setUpArray(gl) {
         [0.58, 0.22, 0.07], // specular
         5,               // shiny
         1.0,                //alpha
-        [0, -4, 0],            // position
+        [0, -8, 0],            // position
         180,                  // angle
         [0, 1, 0],            // rotation axis
         [1.25, 1.25, 1.25]             // scale
       );
 
+      // base
+     setUpObjects[6] = setUpObject(
+      gl,
+      './models/baseblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
+      'innen-image',         // texture
+      [1, 1, 1], // ambient
+      [1, 1, 1], // diffuse
+      [0.58, 0.22, 0.07], // specular
+      5,               // shiny
+      1.0,                //alpha
+      [0, -25, 0],            // position
+      180,                  // angle
+      [0, 1, 0],            // rotation axis
+      [1.8, 1.5, 1.5]             // scale
+    );
+
       //light
-      setUpObjects[6] = setUpObject(
+      //last and change dome index
+      setUpObjects[7] = setUpObject(
         gl,
         './models/sphere.obj', 'shader_vert.glsl', 'shader_frag.glsl',
         'room-image',         // texture
