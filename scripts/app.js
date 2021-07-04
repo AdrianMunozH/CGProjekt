@@ -85,8 +85,8 @@ async function InitDemo() {
   gl.enable(gl.DEPTH_TEST);
 
 
-  var viewMatrix = new Float32Array(16);
-  var projMatrix = new Float32Array(16);
+  var viewMatrix = createM4();
+  var projMatrix = createM4();
 
 
   //Draw loop
@@ -177,7 +177,7 @@ Camera.prototype.getViewMatrix = function (out) {
 
 function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLight) {
   program = currentObject.program;
-  var worldMatrix = new Float32Array(16);
+  var worldMatrix = createM4();
 
 
 
@@ -205,8 +205,8 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLi
   const angle = performance.now() / 1000 / 6 * 2 * Math.PI * 1 / 2;
   if (isLight) {
 
-    mat4.translate(worldMatrix, worldMatrix, currentObject.model.position);
-    mat4.translate(worldMatrix, worldMatrix, [Math.sin(angle * 2) / 10, 0, 0]);
+    translate(worldMatrix, worldMatrix, currentObject.model.position);
+    translate(worldMatrix, worldMatrix, [Math.sin(angle * 2) / 10, 0, 0]);
     movingLight.position = [worldMatrix[12], worldMatrix[13], worldMatrix[14]];
     currentObject.model.position = [worldMatrix[12], worldMatrix[13], worldMatrix[14]];
 
@@ -222,9 +222,9 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLi
     gl.uniform3f(lightColorUniformLocation, movingLight.color[0], movingLight.color[1], movingLight.color[2]);
     gl.uniform3f(lightAmbientUniformLocation, movingLight.ambient[0], movingLight.ambient[1], movingLight.ambient[2]);
 
-    // veränderung des objektes -- reihenfolge muss nochmal recherchiert werden
-    mat4.translate(worldMatrix, worldMatrix, currentObject.model.position);
-    mat4.scale(worldMatrix, worldMatrix, currentObject.model.scale);
+    // veränderung des objektes -- erst translate, dann rotate
+    translate(worldMatrix, worldMatrix, currentObject.model.position);
+    scale(worldMatrix, worldMatrix, currentObject.model.scale);
     mat4.rotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
     //drehung
     mat4.rotate(worldMatrix, worldMatrix, -angle / 2, [0, 1, 0]);
@@ -407,27 +407,6 @@ function setUpArray(gl) {
     [1.8, 1.5, 1.5]             // scale
   );
 
-  /*
-  //last and change dome index
-  setUpObjects[6] = setUpObject(
-    gl,
-    './models/sphere.obj', 'shader_vert.glsl', 'shader_frag.glsl',
-    'room-image',         // texture
-    [1, 1, 1], // ambient
-    [0.2, 0.2, 0.2], // diffuse
-    [1.0, 1.0, 1.0], // specular
-    100,               // shiny
-    0.1,                //alpha
-    [0, 0, 0],            // position
-    180,                  // angle
-    [0, 1, 0],            // rotation
-    [20, 20, 20]             // scale
-  );
-
-    */
-
-
-
 
   return setUpObjects;
 }
@@ -446,7 +425,7 @@ async function createObject(model, gl) {
 
   // create texture
   obj.texture = gl.createTexture();
-  //      gl.activeTexture(gl.TEXTURE13); ist in der übung weiß nicht was das bringt, vllt fürs video
+
   gl.activeTexture(gl.TEXTURE0); // es gab ein array an texture an das ist die stelle 0
   /*
   https://webglfundamentals.org/webgl/lessons/webgl-3d-textures.html
@@ -470,7 +449,7 @@ async function createObject(model, gl) {
 
   obj.draw = function () {
 
-    // buffer wird nochmal gebindet für die loop
+    // buffer wird nochmal 'gebindet' für die loop
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBufferObject);
 
     var positionAttribLocation = gl.getAttribLocation(this.program, 'vPosition');
@@ -518,10 +497,7 @@ async function createObject(model, gl) {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
 
-    /*
-    const samplerUniformLocation = gl.getUniformLocation(this.program, 'sampler')
-    gl.uniform1i(samplerUniformLocation, 11); // warum 11 ? für die übung hatte ich das nicht braucht
-    */
+    
 
 
     const ambientUniformLocation = gl.getUniformLocation(this.program, 'mat.ambient');
