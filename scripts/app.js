@@ -221,10 +221,10 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLi
     translate(worldMatrix, worldMatrix, currentObject.model.position);
     scale(worldMatrix, worldMatrix, currentObject.model.scale);
     //mat4.rotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
-    testrotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
+    rotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
     //drehung
     //mat4.rotate(worldMatrix, worldMatrix, -angle / 2, [0, 1, 0]);
-    testrotate(worldMatrix, worldMatrix, -angle / 2, [0, 1, 0]);
+    rotate(worldMatrix, worldMatrix, -angle / 2, [0, 1, 0]);
   }
 
 

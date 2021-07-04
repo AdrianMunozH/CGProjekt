@@ -69,49 +69,9 @@ let scalar = function (up, n) {
   console.log("u2: " + u);
 }
 
-let rotate = function (out, input, angle, axis) {
-  let cos = Math.cos(angle);
-  let sin = Math.sin(angle);
 
-  let rx = [1, 0, 0, 0, 
-            0, Math.cos(angle), -Math.sin(angle), 0, 
-            0, Math.sin(angle), Math.cos(angle), 0, 
-            0, 0, 0, 1];
 
-  let ry = [Math.cos(angle), 0, Math.sin(angle), 0, 
-            0, 1, 0, 0, 
-            -Math.sin(angle), 0, Math.cos(angle), 0, 
-            0, 0, 0, 1];
-  let rz = [Math.cos(angle), -Math.sin(angle), 0, 0, 
-            Math.sin(angle), Math.cos(angle), 0, 0, 
-            0, 0, 1, 0, 
-            0, 0, 0, 1];
-
-  out[0] = Math.cos(angle) + Math.pow(rx, 2) * (1 - Math.cos(angle));
-  out[1] = rx * ry * (1 - Math.cos(angle)) - rz * Math.sin(angle);
-  out[2] = rx * rz * (1 - Math.cos(angle)) + ry * Math.sin(angle);
-  out[3] = 0;
-
-  out[4] = ry * rx * (1 - Math.cos(angle)) + rz * Math.sin(angle);
-  out[5] = Math.cos(angle) + Math.pow(ry,2) * (1 - Math.cos(angle));
-  out[6] = ry * rz * (1 - Math.cos(angle)) - rx * Math.sin(angle);
-  out[7] = 0;
-
-  out[8] = rz * rx * (1-Math.cos(angle)) - ry * Math.sin(angle);
-  out[9] = rz * ry * (1-Math.cos(angle)) + rx * Math.sin(angle);
-  out[10] = Math.cos(angle) + Math.pow(rz,2) * (1 - Math.cos(angle));
-  out[11] = 0;
-
-  out[12] = 0;
-  out[13] = 0;
-  out[14] = 0;
-  out[15] = 1;
-
-  
-  return out; 
-}
-
-let testrotate = function(out, input, angle, axis)
+let rotate = function(out, input, angle, axis)
     {
         let cos = Math.cos(angle);
         let sin = Math.sin(angle);
@@ -159,8 +119,6 @@ let testrotate = function(out, input, angle, axis)
         out[9] = in21 * r13 + in22 * r23 + in23 * r33;
         out[10] = in31 * r13 + in32 * r23 + in33 * r33;
         out[11] = in41 * r13 + in42 * r23 + in43 * r33;
-
-        
     }
 
 let perspective = function(out, fov, aspect,near,far) {
