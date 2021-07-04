@@ -68,15 +68,100 @@ let scalar = function (up, n) {
 
   console.log("u2: " + u);
 }
-let rotate = function (out, angle) {
-  let rx = [1, 0, 0, 0, 0, Math.cos(angle), Math.sin(angle), 0, 0, -Math.sin(angle), Math.cos(angle), 0, 0, 0, 0, 1];
-  let ry = [Math.cos(angle), 0, -Math.sin(angle), 0, 0, 1, 0, 0, Math.sign(angle), 0, Math.cos(angle), 0, 0, 0, 0, 1];
-  let rz = [Math.cos(angle), Math.sin(angle), 0, 0, -Math.sin(angle), Math.cos(angle), 0, 0, 0, 1, 0, 0, 0, 0, 0, 1];
 
+let rotate = function (out, input, angle, axis) {
+  let cos = Math.cos(angle);
+  let sin = Math.sin(angle);
 
+  let rx = [1, 0, 0, 0, 
+            0, Math.cos(angle), -Math.sin(angle), 0, 
+            0, Math.sin(angle), Math.cos(angle), 0, 
+            0, 0, 0, 1];
 
+  let ry = [Math.cos(angle), 0, Math.sin(angle), 0, 
+            0, 1, 0, 0, 
+            -Math.sin(angle), 0, Math.cos(angle), 0, 
+            0, 0, 0, 1];
+  let rz = [Math.cos(angle), -Math.sin(angle), 0, 0, 
+            Math.sin(angle), Math.cos(angle), 0, 0, 
+            0, 0, 1, 0, 
+            0, 0, 0, 1];
+
+  out[0] = Math.cos(angle) + Math.pow(rx, 2) * (1 - Math.cos(angle));
+  out[1] = rx * ry * (1 - Math.cos(angle)) - rz * Math.sin(angle);
+  out[2] = rx * rz * (1 - Math.cos(angle)) + ry * Math.sin(angle);
+  out[3] = 0;
+
+  out[4] = ry * rx * (1 - Math.cos(angle)) + rz * Math.sin(angle);
+  out[5] = Math.cos(angle) + Math.pow(ry,2) * (1 - Math.cos(angle));
+  out[6] = ry * rz * (1 - Math.cos(angle)) - rx * Math.sin(angle);
+  out[7] = 0;
+
+  out[8] = rz * rx * (1-Math.cos(angle)) - ry * Math.sin(angle);
+  out[9] = rz * ry * (1-Math.cos(angle)) + rx * Math.sin(angle);
+  out[10] = Math.cos(angle) + Math.pow(rz,2) * (1 - Math.cos(angle));
+  out[11] = 0;
+
+  out[12] = 0;
+  out[13] = 0;
+  out[14] = 0;
+  out[15] = 1;
+
+  
   return out; 
 }
+
+let testrotate = function(out, input, angle, axis)
+    {
+        let cos = Math.cos(angle);
+        let sin = Math.sin(angle);
+
+        let r11 = cos + Math.pow(axis[0], 2) * (1 - cos);
+        let r12 = axis[0] * axis[1] * (1 - cos) - axis[2] * sin;
+        let r13 = axis[0] * axis[2] * (1 - cos) + axis[1] * sin;
+
+        let r21 = axis[1] * axis[0] * (1 - cos) + axis[2] * sin;
+        let r22 = cos + Math.pow(axis[1], 2) * (1 - cos);
+        let r23 = axis[1] * axis[2] * (1 - cos) - axis[0] * sin;
+
+        let r31 = axis[2] * axis[0] * (1 - cos) - axis[1] * sin;
+        let r32 = axis[2] * axis[1] * (1 - cos) + axis[0] * sin;
+        let r33 = cos + Math.pow(axis[2], 2) * (1 - cos);
+
+        let in11 = input[0];
+        let in12 = input[4];
+        let in13 = input[8];
+        //
+        let in21 = input[1];
+        let in22 = input[5];
+        let in23 = input[9];
+        //  
+        let in31 = input[2];
+        let in32 = input[6];
+        let in33 = input[10];
+        //  
+        let in41 = input[3];
+        let in42 = input[7];
+        let in43 = input[11];
+        // 
+
+        out[0] = in11 * r11 + in12 * r21 + in13 * r31;
+        out[1] = in21 * r11 + in22 * r21 + in23 * r31;
+        out[2] = in31 * r11 + in32 * r21 + in33 * r31;
+        out[3] = in41 * r11 + in42 * r21 + in43 * r31;
+
+        out[4] = in11 * r12 + in12 * r22 + in13 * r32;
+        out[5] = in21 * r12 + in22 * r22 + in23 * r32;
+        out[6] = in31 * r12 + in32 * r22 + in33 * r32;
+        out[7] = in41 * r12 + in42 * r22 + in43 * r32;
+
+        out[8] = in11 * r13 + in12 * r23 + in13 * r33;
+        out[9] = in21 * r13 + in22 * r23 + in23 * r33;
+        out[10] = in31 * r13 + in32 * r23 + in33 * r33;
+        out[11] = in41 * r13 + in42 * r23 + in43 * r33;
+
+        
+    }
 
 let perspective = function(out, fov, aspect,near,far) {
 

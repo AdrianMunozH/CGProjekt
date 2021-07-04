@@ -24,7 +24,7 @@ async function InitDemo() {
     gl,
     './models/sphere.obj', 'light_vert.glsl', 'light_frag.glsl',
     lColor, // color
-    [0, 6, 0],            // position
+    [0, 9, 0],            // position
     0,                  // angle
     [0, 1, 0],            // rotation
     [0.5, 0.5, 0.5]             // scale
@@ -220,9 +220,11 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLi
     // veränderung des objektes -- erst translate, dann rotate
     translate(worldMatrix, worldMatrix, currentObject.model.position);
     scale(worldMatrix, worldMatrix, currentObject.model.scale);
-    mat4.rotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
+    //mat4.rotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
+    testrotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
     //drehung
-    mat4.rotate(worldMatrix, worldMatrix, -angle / 2, [0, 1, 0]);
+    //mat4.rotate(worldMatrix, worldMatrix, -angle / 2, [0, 1, 0]);
+    testrotate(worldMatrix, worldMatrix, -angle / 2, [0, 1, 0]);
   }
 
 
