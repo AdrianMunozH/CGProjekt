@@ -22,7 +22,6 @@ var scale = function (out, matrix, scaleVec) {
   out[14] = matrix[14];
   out[15] = matrix[15];
   
-  console.log(out);
   return out;
 }
 let translate = function (out, matrix, transVec) {
@@ -75,7 +74,7 @@ let rotate = function(out, input, angle, axis)
     {
         let cos = Math.cos(angle);
         let sin = Math.sin(angle);
-
+        // vl 43 folie 7
         let r11 = cos + Math.pow(axis[0], 2) * (1 - cos);
         let r12 = axis[0] * axis[1] * (1 - cos) - axis[2] * sin;
         let r13 = axis[0] * axis[2] * (1 - cos) + axis[1] * sin;
@@ -104,6 +103,8 @@ let rotate = function(out, input, angle, axis)
         let in42 = input[7];
         let in43 = input[11];
         // 
+
+        // vl 43 folie 8
 
         out[0] = in11 * r11 + in12 * r21 + in13 * r31;
         out[1] = in21 * r11 + in22 * r21 + in23 * r31;

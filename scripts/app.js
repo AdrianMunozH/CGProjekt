@@ -1,5 +1,3 @@
-//const nearFar = [0.01, 100]; brauchen wir vllt gar nicht mehr 
-
 async function InitDemo() {
   // canvas,gl setup
   console.log('This is working');
@@ -39,7 +37,7 @@ async function InitDemo() {
   };
 
 
-  //light
+  //dome
   const dome = await setUpObject(
     gl,
     './models/sphere.obj', 'shader_vert.glsl', 'shader_frag.glsl',
@@ -63,7 +61,7 @@ async function InitDemo() {
   models = await setUpArray(gl);
 
 
-  // dome
+
 
   // blending equation C¯result = C¯source ∗ Fsource + C¯destination ∗ Fdestination
   gl.blendColor(0.0, 0.0, 0.0, 0.7);
@@ -82,11 +80,6 @@ async function InitDemo() {
   );
 
 
-  // muss nochmal alles durchgegangen werden
-  gl.clearColor(0.75, 0.85, 0.8, 1.0);
-  gl.enable(gl.DEPTH_TEST);
-
-
   var viewMatrix = createM4();
   var projMatrix = createM4();
 
@@ -103,20 +96,17 @@ async function InitDemo() {
     gl.cullFace(gl.BACK);
 
 
-    // kamera
+    // kamerav - set viewmatrix
     actCamera.getViewMatrix(viewMatrix);
 
 
-    //mat4.perspective(projMatrix, degrees_to_radians(45), canvas.width / canvas.height, 0.1, 1000.0);
+    // set projmatrix
     perspective(projMatrix, degrees_to_radians(45), canvas.width / canvas.height, 0.1, 1000.0);
 
     // blend aus
     gl.depthMask(true);
     gl.disable(gl.BLEND);
 
-
-
-    // view matrizen von cams aktualisieren
 
     index = 0;
     // Rendert alle objekte
@@ -137,15 +127,6 @@ async function InitDemo() {
       index++;
     }
 
-    /*
-    gl.depthMask(false);
-    gl.enable(gl.BLEND);
-    await drawObject(gl, dome, viewMatrix, projMatrix, light, false);
-    // light
-    await drawObject(gl, lightModel, viewMatrix, projMatrix, light, true);
-    */
-
-
     requestAnimationFrame(await loop);
   }
 
@@ -157,21 +138,10 @@ var Camera = function (position, lookAt, up) {
   this.position = position;
   this.lookAt = lookAt;
   this.up = up;
-  /*
-  
-  this.forward = createVec3();
-  this.forward = addVec3(lookAt, negateVec3(this.position));
-  
-
-  normalizeVec3(this.forward, this.forward); // bin mir nicht sicher ob normalisiert werden muss
-*/
 }
 
 // https://developer.mozilla.org/de/docs/Learn/JavaScript/Objects/Object_prototypes
 Camera.prototype.getViewMatrix = function (out) {
-  //let lookAtVar = createVec3(); // wir müssen unsere lookat variable berechnen weil die shadow cameras sich nicht am ursprung befinden
-  //lookAtVar = addVec3(this.position, this.forward);
-  // falls wir nicht immer in den urprung gucken sollen müssen wir noch die derz. position addieren
   lookAt(out, this.position, this.lookAt, this.up);
   return out;
 }
@@ -182,9 +152,10 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLi
   program = currentObject.program;
   var worldMatrix = createM4();
 
-  // Draw Objects
   gl.useProgram(program);
 
+
+  // setzt uniforms die alle obj im vshader haben
   let matProjUniformLocation = gl.getUniformLocation(program, 'mProj');
   gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
 
@@ -205,9 +176,6 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLi
     movingLight.position = [worldMatrix[12], worldMatrix[13], worldMatrix[14]];
     currentObject.model.position = [worldMatrix[12], worldMatrix[13], worldMatrix[14]];
 
-    //console.log(movingLight.position);
-    //console.log(currentObject.model.position);
-
 
   } else {
     const lightPositionUniformLocation = gl.getUniformLocation(program, 'light.position');
@@ -220,10 +188,8 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLi
     // veränderung des objektes -- erst translate, dann rotate
     translate(worldMatrix, worldMatrix, currentObject.model.position);
     scale(worldMatrix, worldMatrix, currentObject.model.scale);
-    //mat4.rotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
     rotate(worldMatrix, worldMatrix, degrees_to_radians(currentObject.model.angle), currentObject.model.rotationAxis);
     //drehung
-    //mat4.rotate(worldMatrix, worldMatrix, -angle / 2, [0, 1, 0]);
     rotate(worldMatrix, worldMatrix, -angle / 2, [0, 1, 0]);
   }
 
@@ -240,7 +206,7 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLi
 
 async function setUpObject(gl, objFile, vertShader, fragShader, texture, ambient, diffuse, specular, shiny, alpha, position, angle, rotationAxis, scale) {
 
-  const oVertices = await fetchModel(objFile);
+  const oVertices = await loadObj(objFile);
 
   // material werte
   let oMaterial = {
@@ -252,7 +218,7 @@ async function setUpObject(gl, objFile, vertShader, fragShader, texture, ambient
   }
 
 
-  // init der versch models.
+  // init des models
   let modelObj = {
     vertices: oVertices,
     texture: texture,
@@ -261,10 +227,9 @@ async function setUpObject(gl, objFile, vertShader, fragShader, texture, ambient
     angle: angle,
     rotationAxis: rotationAxis,
     scale: scale
-    // is skybox ?? oder wessen program benutzt werden so   ll
-    // textur
   }
 
+  // obj file wird geladen
   const setUpObject = await createObject(modelObj, gl);
   //shader datein werden geladen
   setUpObject.program = await createShaderProgram(gl, './shaders/'.concat(vertShader), './shaders/'.concat(fragShader));
@@ -280,7 +245,7 @@ async function setUpObject(gl, objFile, vertShader, fragShader, texture, ambient
 // letztendlich einfach nur ohne texture und dafür eine farbe
 async function setUpLight(gl, objFile, vertShader, fragShader, color, position, angle, rotationAxis, scale) {
 
-  const oVertices = await fetchModel(objFile);
+  const oVertices = await loadObj(objFile);
 
 
   let modelObj = {
@@ -306,6 +271,9 @@ async function setUpLight(gl, objFile, vertShader, fragShader, color, position, 
 
 function setUpArray(gl) {
   let setUpObjects = [];
+
+
+  // alle Objekte drin die gezeichnet werden sollen außer blending objs
 
 
   // innen
@@ -423,7 +391,7 @@ async function createObject(model, gl) {
   // create texture
   obj.texture = gl.createTexture();
 
-  gl.activeTexture(gl.TEXTURE0); // es gab ein array an texture an das ist die stelle 0
+  gl.activeTexture(gl.TEXTURE0); // es gibt ein array an texture, wir brauchen die textur an stelle 0
   /*
   https://webglfundamentals.org/webgl/lessons/webgl-3d-textures.html
   You can choose what WebGL does by setting the texture filtering for each texture. There are 6 modes
@@ -464,7 +432,7 @@ async function createObject(model, gl) {
 
 
 
-    var texCoordAttribLocation = gl.getAttribLocation(this.program, 'vTex'); // muss nochmal umgenannt werden
+    var texCoordAttribLocation = gl.getAttribLocation(this.program, 'vTex');
     gl.vertexAttribPointer(
       texCoordAttribLocation,
       2,
