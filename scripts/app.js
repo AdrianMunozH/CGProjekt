@@ -38,7 +38,8 @@ async function InitDemo() {
     model: lightModel
   };
 
-  //last and change dome index
+
+  //light
   const dome = await setUpObject(
     gl,
     './models/sphere.obj', 'shader_vert.glsl', 'shader_frag.glsl',
@@ -106,7 +107,8 @@ async function InitDemo() {
     actCamera.getViewMatrix(viewMatrix);
 
 
-    mat4.perspective(projMatrix, degrees_to_radians(45), canvas.width / canvas.height, 0.1, 1000.0);
+    //mat4.perspective(projMatrix, degrees_to_radians(45), canvas.width / canvas.height, 0.1, 1000.0);
+    perspective(projMatrix, degrees_to_radians(45), canvas.width / canvas.height, 0.1, 1000.0);
 
     // blend aus
     gl.depthMask(true);
@@ -543,8 +545,6 @@ async function createObject(model, gl) {
   }
   return obj;
 }
-
-
 
 async function createLight(model, gl) {
 
