@@ -1,4 +1,5 @@
 //const nearFar = [0.01, 100]; brauchen wir vllt gar nicht mehr 
+
 async function InitDemo() {
   // canvas,gl setup
   console.log('This is working');
@@ -37,11 +38,12 @@ async function InitDemo() {
     model: lightModel
   };
 
-  //last and change dome index
+
+  //light
   const dome = await setUpObject(
     gl,
     './models/sphere.obj', 'shader_vert.glsl', 'shader_frag.glsl',
-    'room-image',         // texture
+    'aussen-image',         // texture
     [1, 1, 1], // ambient
     [0.2, 0.2, 0.2], // diffuse
     [1.0, 1.0, 1.0], // specular
@@ -105,7 +107,8 @@ async function InitDemo() {
     actCamera.getViewMatrix(viewMatrix);
 
 
-    mat4.perspective(projMatrix, degrees_to_radians(45), canvas.width / canvas.height, 0.1, 1000.0);
+    //mat4.perspective(projMatrix, degrees_to_radians(45), canvas.width / canvas.height, 0.1, 1000.0);
+    perspective(projMatrix, degrees_to_radians(45), canvas.width / canvas.height, 0.1, 1000.0);
 
     // blend aus
     gl.depthMask(true);
@@ -179,16 +182,8 @@ function drawObject(gl, currentObject, viewMatrix, projMatrix, movingLight, isLi
   program = currentObject.program;
   var worldMatrix = createM4();
 
-
-
   // Draw Objects
   gl.useProgram(program);
-
-
-
-
-
-
 
   let matProjUniformLocation = gl.getUniformLocation(program, 'mProj');
   gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
@@ -316,9 +311,9 @@ function setUpArray(gl) {
     gl,
     './models/innenblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
     'innen-image',         // texture
-    [1, 1, 1], // ambient
+    [0, 0, 0], // ambient
     [1, 1, 1], // diffuse
-    [0.58, 0.22, 0.07], // specular
+    [0.5, 0.5, 0.5], // specular
     5,               // shiny
     1.0,                //alpha
     [0, -8, 0],            // position
@@ -331,10 +326,10 @@ function setUpArray(gl) {
   setUpObjects[1] = setUpObject(
     gl,
     './models/aussenblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
-    'room-image',         // texture
-    [1, 1, 1], // ambient
+    'aussen-image',         // texture
+    [0, 0, 0], // ambient
     [1, 1, 1], // diffuse
-    [0.58, 0.22, 0.07], // specular
+    [0.5, 0.5, 0.5], // specular
     5,               // shiny
     1.0,                //alpha
     [0, -8, 0],            // position
@@ -348,10 +343,10 @@ function setUpArray(gl) {
     gl,
     './models/pcobjblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
     'computer-image',         // texture
-    [1, 1, 1], // ambient
+    [0, 0, 0], // ambient
     [1, 1, 1], // diffuse
-    [0.58, 0.22, 0.07], // specular
-    5,               // shiny
+    [0.5, 0.5, 0.5], // specular
+    1,               // shiny
     1.0,                //alpha
     [0, -8, 0],            // position
     180,                  // angle
@@ -364,10 +359,10 @@ function setUpArray(gl) {
     gl,
     './models/teppichblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
     'teppich-image',         // texture
-    [1, 1, 1], // ambient
+    [0, 0, 0], // ambient
     [1, 1, 1], // diffuse
     [0.1, 0.1, 0.1], // specular
-    5,               // shiny
+    1,               // shiny
     1.0,                //alpha
     [0, -8, 0],            // position
     180,                  // angle
@@ -380,10 +375,10 @@ function setUpArray(gl) {
     gl,
     './models/woodstuffobjblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
     'wood-image',         // texture
-    [1, 1, 1], // ambient
+    [0, 0, 0], // ambient
     [1, 1, 1], // diffuse
-    [0.58, 0.22, 0.07], // specular
-    5,               // shiny
+    [0.1, 0.1, 0.1], // specular
+    1,               // shiny
     1.0,                //alpha
     [0, -8, 0],            // position
     180,                  // angle
@@ -396,10 +391,10 @@ function setUpArray(gl) {
     gl,
     './models/baseblender.obj', 'shader_vert.glsl', 'shader_frag.glsl',
     'innen-image',         // texture
-    [1, 1, 1], // ambient
-    [1, 1, 1], // diffuse
-    [0.58, 0.22, 0.07], // specular
-    5,               // shiny
+    [0, 0, 0], // ambient
+    [0.8, 0.8, 0.8], // diffuse
+    [0.99, 0.99, 0.99], // specular
+    0.8,               // shiny
     1.0,                //alpha
     [0, -25, 0],            // position
     180,                  // angle
@@ -529,8 +524,6 @@ async function createObject(model, gl) {
   }
   return obj;
 }
-
-
 
 async function createLight(model, gl) {
 

@@ -77,7 +77,20 @@ let rotate = function (out, angle) {
 
   return out; 
 }
-let perspective = function (out, fov, aspect, near, far) {
+
+let perspective = function(out, fov, aspect,near,far) {
+
+  var cotan = 1 / Math.tan(fov/2);
+  var diff = 1 / (near - far);
+
+  out.fill(0);
+  out[0] = cotan / aspect; 
+  out[5] = cotan; 
+  out[10] = (far + near) * diff; // zwischen -1 und 0.99
+  out[11] = -1; //
+  out[14] = (2 * far * near) * diff; //q aber mit wert von z
+
+  return out;
 
 }
 
